@@ -1,10 +1,18 @@
 /* global expect */
-import Request from '../src/requests';
-import Resource from '../src/resource';
 import Id from 'septima-utils/id';
 import Invoke from 'septima-utils/invoke';
+import Request from '../src/requests';
+import Resource from '../src/resource';
+import mockSeptimaServer from './server-mock';
 
-describe('Septima AJAX requests', () => {
+describe('Septima Api. ', () => {
+    beforeAll(() => {
+        mockSeptimaServer();
+    });
+    afterAll(() => {
+        XMLHttpRequest.restore();
+    });
+
     it('commit(insert -> update -> delete).success', done => {
         const newPetId = Id.generate();
         const insertRequest = Request.requestCommit([
@@ -166,7 +174,7 @@ describe('Septima AJAX requests', () => {
     });
     it('entity.failure.1', done => {
         const request = Request.requestEntity('absent-entity', entity => {
-            fail('Request about abesent entity should lead to an error.');
+            fail('Request about absent entity should lead to an error.');
             done();
         }, e => {
             expect(e).toBeDefined();
@@ -204,7 +212,7 @@ describe('Septima AJAX requests', () => {
         window.septimajs.config.apiUri = 'absent-uri';
         try {
             const request = Request.requestLoggedInUser(() => {
-                fail("Invalid 'loggedInUser' request shoiuld lead to anerror");
+                fail("Invalid 'loggedInUser' request should lead to anerror");
                 done();
             }, e => {
                 expect(e).toBeDefined();
@@ -246,7 +254,7 @@ describe('Septima AJAX requests', () => {
         }
     });
     it('serverMethodExecution.success', done => {
-        const request = Request.requestServerMethodExecution('assets/server-modules/test-sever-module', 'echo', [
+        const request = Request.requestServerMethodExecution('assets/server-modules/test-server-module', 'echo', [
             JSON.stringify(0),
             JSON.stringify(1),
             JSON.stringify(2),
@@ -262,7 +270,7 @@ describe('Septima AJAX requests', () => {
         expect(request.cancel).toBeDefined();
     });
     it('serverMethodExecution.failure.1', done => {
-        const request = Request.requestServerMethodExecution('absent-sever-module', 'echo', [
+        const request = Request.requestServerMethodExecution('absent-server-module', 'echo', [
             JSON.stringify(0),
             JSON.stringify(1),
             JSON.stringify(2),
@@ -277,7 +285,7 @@ describe('Septima AJAX requests', () => {
         expect(request.cancel).toBeDefined();
     });
     it('serverMethodExecution.failure.2', done => {
-        const request = Request.requestServerMethodExecution('assets/server-modules/test-sever-module', 'failureEcho', [
+        const request = Request.requestServerMethodExecution('assets/server-modules/test-server-module', 'failureEcho', [
             JSON.stringify(0),
             JSON.stringify(1),
             JSON.stringify(2),
@@ -321,131 +329,5 @@ describe('Septima AJAX requests', () => {
         });
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
-    });
-    it('loadText.abs.success', done => {
-        const request = Resource.loadText('assets/text-content.xml', loaded => {
-            expect(loaded).toBeDefined();
-            expect(loaded.length).toBeDefined();
-            expect(loaded.length).toEqual(59);
-            done();
-        }, e => {
-            fail(e);
-            done();
-        });
-        expect(request).toBeDefined();
-        expect(request.cancel).toBeDefined();
-    });
-    it('load.text as binary.abs.success', done => {
-        const request = Resource.load('assets/text-content.xml', buffer => {
-            expect(buffer).toBeDefined();
-            expect(buffer.length).toBeDefined();
-            expect(buffer.length).toEqual(59);
-            done();
-        }, e => {
-            fail(e);
-            done();
-        });
-        expect(request).toBeDefined();
-        expect(request.cancel).toBeDefined();
-    });
-    it('load.abs.success', done => {
-        const request = Resource.load('assets/binary-content.png', buffer => {
-            expect(buffer).toBeDefined();
-            expect(buffer.length).toBeDefined();
-            expect(buffer.length).toEqual(564);
-            done();
-        }, e => {
-            fail(e);
-            done();
-        });
-        expect(request).toBeDefined();
-        expect(request.cancel).toBeDefined();
-    });
-    it('load.abs.failure', done => {
-        const request = Resource.load('assets/absent-content.png', buffer => {
-            fail('Loading of absent content should lead to an error');
-            done();
-        }, e => {
-            expect(e).toBeDefined();
-            done();
-        });
-        expect(request).toBeDefined();
-        expect(request.cancel).toBeDefined();
-    });
-    it('load.relative.success', done => {
-        const request = Resource.load('../../app/assets/binary-content.png', buffer => {
-            expect(buffer).toBeDefined();
-            expect(buffer.length).toBeDefined();
-            expect(buffer.length).toEqual(564);
-            done();
-        }, e => {
-            fail(e);
-            done();
-        });
-        expect(request).toBeDefined();
-        expect(request.cancel).toBeDefined();
-    });
-    it('load.relative.failure', done => {
-        const request = Resource.load('../../app/assets/absent-content.png', buffer => {
-            fail('Loading of absent content should lead to an error');
-            done();
-        }, e => {
-            expect(e).toBeDefined();
-            done();
-        });
-        expect(request).toBeDefined();
-        expect(request.cancel).toBeDefined();
-    });
-    it('load.global.success', done => {
-        const request = Resource.load('http://localhost:8085/septima-js-tests/app/assets/binary-content.png', buffer => {
-            expect(buffer).toBeDefined();
-            expect(buffer.length).toBeDefined();
-            expect(buffer.length).toEqual(564);
-            done();
-        }, e => {
-            fail(e);
-            done();
-        });
-        expect(request).toBeDefined();
-        expect(request.cancel).toBeDefined();
-    });
-    it('load.global.failure', done => {
-        const request = Resource.load('http://localhost:8085/septima-js-tests/app/assets/absent-content.png', buffer => {
-            fail('Loading of absent content should lead to an error');
-            done();
-        }, e => {
-            expect(e).toBeDefined();
-            done();
-        });
-        expect(request).toBeDefined();
-        expect(request.cancel).toBeDefined();
-    });
-    it('upload.success', done => {
-        pending('Run it with manual file selection');
-        let uploadedTotal = 0;
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.onchange = () => {
-            const file = fileInput.files[0];
-            document.body.removeChild(fileInput);
-            const request = Resource.upload(file, 'test-uploaded-resource.bin', uploaded => {
-                expect(uploaded).toBeDefined();
-                expect(Array.isArray(uploaded)).toBeTruthy();
-                expect(uploaded.length).toEqual(1);
-                expect(uploadedTotal).toBeGreaterThan(0);
-                done();
-            }, progress => {
-                uploadedTotal = progress.total;
-            }, e => {
-                fail(e);
-                done();
-            });
-            expect(request).toBeDefined();
-            expect(request.cancel).toBeDefined();
-        };
-        document.body.appendChild(fileInput);
-        Invoke.later(() => {
-            fileInput.click();
-        });
     });
 });

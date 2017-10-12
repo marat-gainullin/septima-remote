@@ -3,10 +3,18 @@ module.exports = function (config) {
         basePath: '.',
         // available frameworks: https://npmjs.org/browse/keyword/karma-adapter
         frameworks: ['browserify', 'jasmine'],
+        /*
+        client: {
+            jasmine: {
+                random: true
+            }
+        },
+        */
         // list of files / patterns to load in the browser
         files: [
             'src/**/*.js',
-            'test/**/*.js'
+            'test/**/*.js',
+            { pattern: 'assets/**/*.*', included: false }
         ],
         // list of files to exclude
         exclude: [

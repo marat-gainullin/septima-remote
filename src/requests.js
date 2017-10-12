@@ -12,7 +12,7 @@ const RequestTypes = {
     rqCredential: '5',
     rqModuleStructure: '19',
     rqResource: '20',
-    rqAppQuery: '6',
+    rqAppEntity: '6',
     rqExecuteQuery: '7',
     rqCommit: '8',
     rqCreateServerModule: '12',
@@ -20,6 +20,7 @@ const RequestTypes = {
     rqExecuteServerModuleMethod: '14',
     rqLogout: '18'
 };
+Object.seal(RequestTypes);
 
 const RequestParams = {
     CACHE_BUSTER: "__cb",
@@ -29,6 +30,7 @@ const RequestParams = {
     METHOD_NAME: "__methodName",
     PARAMS_ARRAY: "__param[]"
 };
+Object.seal(RequestParams);
 
 const Methods = {
     GET: 'GET',
@@ -223,7 +225,7 @@ function isReportResponse(aResponse) {
 }
 
 function requestEntity(entityName, onSuccess, onFailure) {
-    const url = params(param(RequestParams.TYPE, RequestTypes.rqAppQuery), param(RequestParams.ENTITY_NAME, entityName));
+    const url = params(param(RequestParams.TYPE, RequestTypes.rqAppEntity), param(RequestParams.ENTITY_NAME, entityName));
     return startApiRequest(null, url, "", Methods.GET, null, xhr => {
         if (isJsonResponse(xhr)) {
             if (onSuccess) {
@@ -244,10 +246,7 @@ function requestEntity(entityName, onSuccess, onFailure) {
 
 function requestLogout(onSuccess, onFailure) {
     const query = param(RequestParams.TYPE, RequestTypes.rqLogout);
-    return startApiRequest(null, query, null, Methods.GET, null, xhr => {
-        principal = null;
-        onSuccess(xhr);
-    }, xhr => {
+    return startApiRequest(null, query, null, Methods.GET, null, onSuccess, xhr => {
         onFailure(xhr.responseText ? xhr.responseText : (`${xhr.status} : ${xhr.statusText}`));
     });
 }

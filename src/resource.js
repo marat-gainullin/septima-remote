@@ -138,28 +138,9 @@ function load(aResourceName, aBinary, onSuccess, onFailure) {
             }
         }, aResult => {
             if (onFailure) {
-                try {
-                    onFailure(aResult.status ? (`${aResult.status} : ${aResult.statusText}`) : "It seems, that request has been cancelled. See browser's console for more details.");
-                } catch (ex) {
-                    Logger.severe(ex);
-                }
+                onFailure(aResult.status ? (`${aResult.status} : ${aResult.statusText}`) : "It seems, that request has been cancelled. See browser's console for more details.");
             }
         });
-    } else {
-        const executed = syncRequest(url, '');
-        if (executed) {
-            if (200 <= executed.status && executed.status < 300) {
-                if (executed.responseType === 'arraybuffer') {
-                    const buffer = executed.responseArrayBuffer;
-                    buffer.length = buffer.byteLength;
-                    return buffer;
-                } else {
-                    return executed.responseText;
-                }
-            } else {
-                throw executed.statusText;
-            }
-        }
     }
     return null;
 }
@@ -196,7 +177,7 @@ function upload(aFile, aName, onComplete, onProgresss, onFailure) {
 
 function startDownloadRequest(url, responseType, onSuccess, onFailure) {
     const req = new XMLHttpRequest();
-    req.open("get", url);
+    req.open('get', url);
     // Must set the onreadystatechange handler before calling send().
     req.onreadystatechange = () => {
         if (req.readyState === 4 /*RequestState.DONE*/ ) {
