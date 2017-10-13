@@ -33,8 +33,8 @@ module.exports = function (config) {
                     'babelify', {
                         ignore: /node_modules/
                     }
-                ],
-                ['browserify-babel-istanbul']
+                ]
+                ,['browserify-babel-istanbul']
             ],
             extensions: ['.js']
         },
@@ -65,11 +65,11 @@ module.exports = function (config) {
         // start these browsers
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
         browsers: ['Chrome'],
-        // Continuous Integration mode
-        // if true, Karma captures browsers, runs the tests and exits
-        singleRun: true,
         // Concurrency level
         // how many browser should be started simultaneous
-        concurrency: Infinity
+        concurrency: Infinity,
+        // Continuous Integration mode
+        // if true, Karma captures browsers, runs the tests and exits
+        singleRun: true
     });
 };

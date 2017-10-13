@@ -9,10 +9,10 @@ if (!global.septimajs) {
         let sourcePath = '/';
         let apiUri = '/application';
         Object.defineProperty(config, 'sourcePath', {
-            get: function() {
+            get: function () {
                 return sourcePath;
             },
-            set: function(aValue) {
+            set: function (aValue) {
                 if (aValue) {
                     sourcePath = aValue;
                     if (!sourcePath.endsWith("/")) {
@@ -27,10 +27,10 @@ if (!global.septimajs) {
             }
         });
         Object.defineProperty(config, 'apiUri', {
-            get: function() {
+            get: function () {
                 return apiUri;
             },
-            set: function(aValue) {
+            set: function (aValue) {
                 if (!aValue.startsWith('/'))
                     aValue = `/${aValue}`;
                 if (aValue.endsWith('/'))
@@ -113,36 +113,31 @@ function toFilyAppModuleId(relativePath, startPoint) {
     return mormalizedRelativeModuleUrl;
 }
 
-function load(aResourceName, aBinary, onSuccess, onFailure) {
+function load(resourceName, binary, manager) {
     let url;
-    if (aResourceName.startsWith('./') || aResourceName.startsWith('../')) {
+    if (resourceName.startsWith('./') || resourceName.startsWith('../')) {
         const callerDir = lookupCallerJsDir();
-        url = resourceUri(toFilyAppModuleId(aResourceName, callerDir));
+        url = resourceUri(toFilyAppModuleId(resourceName, callerDir));
     } else {
-        url = resourceUri(aResourceName);
+        url = resourceUri(resourceName);
     }
-    if (onSuccess) {
-        return startDownloadRequest(url, aBinary ? 'arraybuffer' : '', xhr => {
-            if (200 <= xhr.status && xhr.status < 300) {
-                if (xhr.responseType === 'arraybuffer') {
-                    const buffer = xhr.response;
-                    buffer.length = buffer.byteLength;
-                    onSuccess(buffer);
+    return startDownloadRequest(url, binary ? 'arraybuffer' : '', manager)
+            .then(xhr => {
+                if (200 <= xhr.status && xhr.status < 300) {
+                    if (xhr.responseType === 'arraybuffer') {
+                        const buffer = xhr.response;
+                        buffer.length = buffer.byteLength;
+                        return buffer;
+                    } else {
+                        return xhr.responseText;
+                    }
                 } else {
-                    onSuccess(xhr.responseText);
+                    throw xhr.statusText;
                 }
-            } else {
-                if (onFailure) {
-                    onFailure(xhr.statusText);
-                }
-            }
-        }, aResult => {
-            if (onFailure) {
-                onFailure(aResult.status ? (`${aResult.status} : ${aResult.statusText}`) : "It seems, that request has been cancelled. See browser's console for more details.");
-            }
-        });
-    }
-    return null;
+            })
+            .catch(aResult => {
+                throw aResult.status ? `${aResult.status} : ${aResult.statusText}` : "It seems, that request has been cancelled. See browser's console for more details.";
+            });
 }
 
 function upload(aFile, aName, onComplete, onProgresss, onFailure) {
@@ -175,34 +170,31 @@ function upload(aFile, aName, onComplete, onProgresss, onFailure) {
     }
 }
 
-function startDownloadRequest(url, responseType, onSuccess, onFailure) {
-    const req = new XMLHttpRequest();
-    req.open('get', url);
-    // Must set the onreadystatechange handler before calling send().
-    req.onreadystatechange = () => {
-        if (req.readyState === 4 /*RequestState.DONE*/ ) {
-            req.onreadystatechange = null;
-            if (200 <= req.status && req.status < 300) {
-                if (onSuccess) {
-                    onSuccess(req);
-                }
-            } else {
-                if (onFailure) {
-                    onFailure(req);
+function startDownloadRequest(url, responseType, manager) {
+    return new Promise((resolve, reject) => {
+        const req = new XMLHttpRequest();
+        if (manager) {
+            manager.cancel = function () {
+                req.abort();
+            };
+        }
+        req.open('get', url);
+        // Must set the onreadystatechange handler before calling send().
+        req.onreadystatechange = () => {
+            if (req.readyState === 4 /*RequestState.DONE*/) {
+                req.onreadystatechange = null;
+                if (200 <= req.status && req.status < 300) {
+                    resolve(req);
+                } else {
+                    reject(req);
                 }
             }
+        };
+        if (responseType) {
+            req.responseType = responseType;
         }
-    };
-    if (responseType) {
-        req.responseType = responseType;
-    }
-    req.send();
-    return {
-        cancel: function() {
-            req.onreadystatechange = null;
-            req.abort();
-        }
-    };
+        req.send();
+    });
 }
 
 function startUploadRequest(aFile, aName, onComplete, onProgress, onFailure) {
@@ -244,7 +236,7 @@ function startUploadRequest(aFile, aName, onComplete, onProgress, onFailure) {
     req.overrideMimeType("multipart/form-data");
     // Must set the onreadystatechange handler before calling send().
     req.onreadystatechange = xhr => {
-        if (req.readyState === 4 /*RequestState.DONE*/ ) {
+        if (req.readyState === 4 /*RequestState.DONE*/) {
             req.onreadystatechange = null;
             if (200 <= req.status && req.status < 300) {
                 if (onComplete) {
@@ -261,8 +253,7 @@ function startUploadRequest(aFile, aName, onComplete, onProgress, onFailure) {
     };
     req.send(fd);
     return {
-        cancel: function() {
-            req.onreadystatechange = null;
+        cancel: function () {
             req.abort();
         }
     };
@@ -270,31 +261,31 @@ function startUploadRequest(aFile, aName, onComplete, onProgress, onFailure) {
 
 function Icon() {}
 
-function loadIcon(aResourceName, onSuccess, onFailure) {
-    let url;
-    if (aResourceName.startsWith('./') || aResourceName.startsWith('../')) {
-        const callerDir = lookupCallerJsDir();
-        url = resourceUri(toFilyAppModuleId(aResourceName, callerDir));
-    } else {
-        url = resourceUri(aResourceName);
-    }
-    const image = document.createElement('img');
-    image.onload = () => {
-        image.onload = null;
-        image.onerror = null;
-        onSuccess(image);
-    };
-    image.onerror = e => {
-        image.onload = null;
-        image.onerror = null;
-        if (onFailure)
-            onFailure(e);
-    };
-    image.src = url;
-    return url;
+function loadIcon(aResourceName) {
+    return new Promise((resolve, reject) => {
+        let url;
+        if (aResourceName.startsWith('./') || aResourceName.startsWith('../')) {
+            const callerDir = lookupCallerJsDir();
+            url = resourceUri(toFilyAppModuleId(aResourceName, callerDir));
+        } else {
+            url = resourceUri(aResourceName);
+        }
+        const image = document.createElement('img');
+        image.onload = () => {
+            image.onload = null;
+            image.onerror = null;
+            resolve(image);
+        };
+        image.onerror = e => {
+            image.onload = null;
+            image.onerror = null;
+            reject(e);
+        };
+        image.src = url;
+    });
 }
 Object.defineProperty(Icon, 'load', {
-    get: function() {
+    get: function () {
         return loadIcon;
     }
 });
@@ -304,45 +295,47 @@ const module = {};
 
 Object.defineProperty(module, 'Icon', {
     enumerable: true,
-    get: function() {
+    get: function () {
         return Icon;
     }
 });
 Object.defineProperty(module, 'upload', {
     enumerable: true,
-    get: function() {
+    get: function () {
         return upload;
     }
 });
 Object.defineProperty(module, 'load', {
     enumerable: true,
-    value: function(aResName, onSuccess, onFailure) {
+    configurable: false,
+    value: function (aResName, onSuccess, onFailure) {
         return load(aResName, true, onSuccess, onFailure);
     }
 });
 Object.defineProperty(module, 'loadText', {
     enumerable: true,
-    value: function(aResName, onSuccess, onFailure) {
+    configurable: false,
+    value: function (aResName, onSuccess, onFailure) {
         return load(aResName, false, onSuccess, onFailure);
     }
 });
 Object.defineProperty(module, 'toFilyAppModuleId', {
-    get: function() {
-        return toFilyAppModuleId;
-    }
+    enumerable: true,
+    configurable: false,
+    value: toFilyAppModuleId
 });
 Object.defineProperty(module, 'hostPageBaseURL', {
-    get: function() {
-        return hostPageBaseURL;
-    }
+    enumerable: true,
+    configurable: false,
+    value: hostPageBaseURL
 });
 Object.defineProperty(module, 'relativeUri', {
-    get: function() {
-        return relativeUri;
-    }
+    enumerable: true,
+    configurable: false,
+    value: relativeUri
 });
 Object.defineProperty(module, 'remoteApi', {
-    get: function() {
+    get: function () {
         return remoteApi;
     }
 });

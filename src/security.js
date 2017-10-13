@@ -1,7 +1,7 @@
 import Requests from './requests';
 
 class Principal {
-    
+
     constructor(name) {
         this.name = name;
     }
@@ -10,17 +10,21 @@ class Principal {
         return true;
     }
 
-    logout(onSuccess, onFailure) {
-        return Requests.requestLogout(onSuccess, onFailure);
+    logout(manager) {
+        return Requests.requestLogout(manager);
     }
+}
+function principal(manager) {
+    return Requests.requestLoggedInUser(manager)
+            .then(userName => {
+                return new Principal(userName);
+            });
 }
 
 const module = {};
 Object.defineProperty(module, 'principal', {
-    value: function (aOnSuccess, aOnFailure) {
-        Requests.requestLoggedInUser(aOnSuccess ? aPrincipalName => {
-            aOnSuccess(new Principal(aPrincipalName));
-        } : null, aOnFailure);
-    }
+    enumerable: true,
+    configurable: false,
+    value: principal
 });
 export default module;

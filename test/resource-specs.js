@@ -6,100 +6,115 @@ import Invoke from 'septima-utils/invoke';
 
 describe('Septima resources. ', () => {
     it('loadText.abs.success', done => {
-        const request = Resource.loadText('base/assets/text-content.xml', loaded => {
-            expect(loaded).toBeDefined();
-            expect(loaded.length).toBeDefined();
-            expect(loaded.length).toEqual(59);
-            done();
-        }, e => {
-            fail(e);
-            done();
-        });
+        const request = new Request.Cancelable();
+        Resource.loadText('base/assets/text-content.xml', request)
+                .then(loaded => {
+                    expect(loaded).toBeDefined();
+                    expect(loaded.length).toBeDefined();
+                    expect(loaded.length).toEqual(59);
+                    done();
+                })
+                .catch(e => {
+                    done.fail(e);
+                });
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
     });
     it('load.text as binary.abs.success', done => {
-        const request = Resource.load('base/assets/text-content-as-binary.bin', buffer => {
-            expect(buffer).toBeDefined();
-            expect(buffer.length).toBeDefined();
-            expect(buffer.length).toEqual(59);
-            done();
-        }, e => {
-            fail(e);
-            done();
+        const request = new Request.Cancelable();
+        Resource.load('base/assets/text-content-as-binary.bin', request)
+                .then(buffer => {
+                    expect(buffer).toBeDefined();
+                    expect(buffer.length).toBeDefined();
+                    expect(buffer.length).toEqual(59);
+                    done();
+                }).catch(e => {
+            done.fail(e);
         });
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
     });
     it('load.abs.success', done => {
-        const request = Resource.load('base/assets/binary-content.png', buffer => {
-            expect(buffer).toBeDefined();
-            expect(buffer.length).toBeDefined();
-            expect(buffer.length).toEqual(564);
-            done();
-        }, e => {
-            fail(e);
-            done();
-        });
+        const request = new Request.Cancelable();
+        Resource.load('base/assets/binary-content.png', request)
+                .then(buffer => {
+                    expect(buffer).toBeDefined();
+                    expect(buffer.length).toBeDefined();
+                    expect(buffer.length).toEqual(564);
+                    done();
+                })
+                .catch(e => {
+                    done.fail(e);
+                });
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
     });
     it('load.abs.failure', done => {
-        const request = Resource.load('base/assets/absent-content.png', buffer => {
-            fail('Loading of absent content should lead to an error');
-            done();
-        }, e => {
-            expect(e).toBeDefined();
-            done();
-        });
+        const request = new Request.Cancelable();
+        Resource.load('base/assets/absent-content.png', request)
+                .then(buffer => {
+                    done.fail('Loading of absent content should lead to an error');
+                })
+                .catch(e => {
+                    expect(e).toBeDefined();
+                    done();
+                });
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
     });
     it('load.relative.success', done => {
-        const request = Resource.load('../../../../assets/binary-content.png', buffer => {
-            expect(buffer).toBeDefined();
-            expect(buffer.length).toBeDefined();
-            expect(buffer.length).toEqual(564);
-            done();
-        }, e => {
-            fail(e);
-            done();
-        });
+        const request = new Request.Cancelable();
+        Resource.load('../../../../assets/binary-content.png', request)
+                .then(buffer => {
+                    expect(buffer).toBeDefined();
+                    expect(buffer.length).toBeDefined();
+                    expect(buffer.length).toEqual(564);
+                    done();
+                })
+                .catch(e => {
+                    done.fail(e);
+                });
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
     });
     it('load.relative.failure', done => {
-        const request = Resource.load('../../../../assets/absent-content.png', buffer => {
-            fail('Loading of absent content should lead to an error');
-            done();
-        }, e => {
-            expect(e).toBeDefined();
-            done();
-        });
+        const request = new Request.Cancelable();
+        Resource.load('../../../../assets/absent-content.png', request)
+                .then(buffer => {
+                    done.fail('Loading of absent content should lead to an error');
+                })
+                .catch(e => {
+                    expect(e).toBeDefined();
+                    done();
+                });
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
     });
     it('load.global.success', done => {
-        const request = Resource.load('http://localhost:9876/base/assets/binary-content.png', buffer => {
-            expect(buffer).toBeDefined();
-            expect(buffer.length).toBeDefined();
-            expect(buffer.length).toEqual(564);
-            done();
-        }, e => {
-            fail(e);
-            done();
-        });
+        const request = new Request.Cancelable();
+        Resource.load('http://localhost:9876/base/assets/binary-content.png', request)
+                .then(buffer => {
+                    expect(buffer).toBeDefined();
+                    expect(buffer.length).toBeDefined();
+                    expect(buffer.length).toEqual(564);
+                    done();
+                })
+                .catch(e => {
+                    done.fail(e);
+                });
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
     });
     it('load.global.failure', done => {
-        const request = Resource.load('http://localhost:9876/base/assets/absent-content.png', buffer => {
-            fail('Loading of absent content should lead to an error');
-            done();
-        }, e => {
-            expect(e).toBeDefined();
-            done();
-        });
+        const request = new Request.Cancelable();
+        Resource.load('http://localhost:9876/base/assets/absent-content.png', request)
+                .then(buffer => {
+                    done.fail('Loading of absent content should lead to an error');
+                })
+                .catch(e => {
+                    expect(e).toBeDefined();
+                    done();
+                });
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
     });
@@ -120,8 +135,7 @@ describe('Septima resources. ', () => {
             }, progress => {
                 uploadedTotal = progress.total;
             }, e => {
-                fail(e);
-                done();
+                done.fail(e);
             });
             expect(request).toBeDefined();
             expect(request.cancel).toBeDefined();
