@@ -124,15 +124,15 @@ function dateReviver(k, v) {
     }
 }
 
-function startApiRequest(aUrlPrefix, aUrlQuery, aBody, aMethod, aContentType, manager) {
-    const url = Resource.remoteApi() + global.septimajs.config.apiUri + (aUrlPrefix ? aUrlPrefix : "") + (aUrlQuery ? `?${aUrlQuery}` : "");
+function startApiRequest(urlPrefix, urlQuery, body, method, contentType, manager) {
+    const url = Resource.remoteApi() + global.septimajs.config.apiUri + (urlPrefix ? urlPrefix : "") + (urlQuery ? `?${urlQuery}` : "");
     const req = new XMLHttpRequest();
-    req.open(aMethod, url);
-    if (aContentType) {
-        req.setRequestHeader("Content-Type", aContentType);
+    req.open(method, url);
+    if (contentType) {
+        req.setRequestHeader("Content-Type", contentType);
     }
     req.setRequestHeader("Pragma", "no-cache");
-    return startRequest(req, aBody, manager);
+    return startRequest(req, body, manager);
 }
 
 function startRequest(req, body, manager) {
@@ -146,20 +146,16 @@ function startRequest(req, body, manager) {
             if (req.readyState === 4 /*RequestState.DONE*/) {
                 req.onreadystatechange = null;
                 if (200 <= req.status && req.status < 300) {
-                    if (resolve) {
-                        resolve(req);
-                    }
+                    resolve(req);
                 } else {
-                    if (reject) {
-                        if (req.status === 0) {
-                            // Chrome calls 'req.onreadystatechange' in the same control flow as 'req.abort()'
-                            // has been called by client code. So, we have to emulate network like error control flow.
-                            Invoke.later(() => {
-                                reject(req);
-                            });
-                        } else {
+                    if (req.status === 0) {
+                        // Chrome calls 'req.onreadystatechange' in the same control flow as 'req.abort()'
+                        // has been called by client code. So, we have to emulate network like error control flow.
+                        Invoke.later(() => {
                             reject(req);
-                        }
+                        });
+                    } else {
+                        reject(req);
                     }
                 }
             }
