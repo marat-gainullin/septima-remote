@@ -148,15 +148,10 @@ function startRequest(req, body, manager) {
                 if (200 <= req.status && req.status < 300) {
                     resolve(req);
                 } else {
-                    if (req.status === 0) {
-                        // Chrome calls 'req.onreadystatechange' in the same control flow as 'req.abort()'
-                        // has been called by client code. So, we have to emulate network like error control flow.
-                        Invoke.later(() => {
-                            reject(req);
-                        });
-                    } else {
-                        reject(req);
-                    }
+                    // Chrome calls 'req.onreadystatechange' in the same control flow as 'req.abort()'
+                    // has been called by client code. So, hope promise.reject will adhere right control flow
+                    // and there will not be any difference if request was cancelled or not.
+                    reject(req);
                 }
             }
         };

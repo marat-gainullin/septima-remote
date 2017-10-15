@@ -1,6 +1,6 @@
 {
   "name": "septima-remote",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Septima rpc requests and resources locator.",
   "main": "index.js",
   "repository": "https://github.com/marat-gainullin/septima-remote.git",
