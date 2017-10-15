@@ -18,7 +18,7 @@ export default () => {
         return !isHandledUrl(url);
     });
     xhrSpy.onCreate = (xhr) => {
-        
+
         function respondObj(xhr, bodyObj, statusCode = 200) {
             if (xhr.readyState !== 0) {
                 xhr.respond(statusCode, {"Content-Type": "application/json"}, JSON.stringify(bodyObj));
@@ -40,6 +40,13 @@ export default () => {
                             {name: 'name', description: "Pet's name", type: 'String', nullable: false},
                             {name: 'birthdate', description: "Pet's bith date", type: 'Date', nullable: true}
                         ],
+                        parameters: []
+                    });
+                } else if (xhr.url.endsWith(`application?__type=${Requests.RequestTypes.rqAppEntity}&__queryId=fake-pets`)) {
+                    respondObj(xhr, {
+                        appelement: 'fake-pets',
+                        title: 'Fake pets entity',
+                        fields: [],
                         parameters: []
                     });
                 } else if (xhr.url.endsWith(`application?__type=${Requests.RequestTypes.rqExecuteQuery}&__queryId=pets`)) {
