@@ -19,14 +19,14 @@ module.exports = function (config) {
         // list of files to exclude
         exclude: [
         ],
-        // preprocess matching files before serving them to the browser
+        // pre-process matching files before serving them to the browser
         // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
         preprocessors: {
             'src/**/*.js': ['browserify'],
             'test/**/*.js': ['browserify']
         },
         browserify: {
-            debug: true,
+            extensions: ['.js'],
             bundleDelay: 1000,
             transform: [
                 [
@@ -36,8 +36,11 @@ module.exports = function (config) {
                 ]
                 ,['browserify-babel-istanbul']
             ],
-            extensions: ['.js']
+            debug: true
         },
+        // Continuous Integration mode
+        // if true, Karma captures browsers, runs the tests and exits
+        singleRun: true,
         // test results reporter to use
         // possible values: 'dots', 'progress'
         // available reporters: https://npmjs.org/browse/keyword/karma-reporter
@@ -53,7 +56,8 @@ module.exports = function (config) {
                     subdir: 'coverage'
                 }
             ]
-        }, // web server port
+        },
+        // web server port
         port: 9876,
         // enable / disable colors in the output (reporters and logs)
         colors: true,
@@ -67,9 +71,6 @@ module.exports = function (config) {
         browsers: ['Chrome'],
         // Concurrency level
         // how many browser should be started simultaneous
-        concurrency: Infinity,
-        // Continuous Integration mode
-        // if true, Karma captures browsers, runs the tests and exits
-        singleRun: true
+        concurrency: Infinity
     });
 };

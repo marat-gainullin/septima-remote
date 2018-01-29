@@ -1,25 +1,14 @@
 import gulp from 'gulp';
 
-import yargs from 'yargs';
-import gulpUtil from 'gulp-util';
 import through from 'through2';
 import Path from 'path';
 import Capitalize from 'capitalize';
 import gulpConcat from 'gulp-concat';
-import gulpif from 'gulp-if';
 import clean from 'gulp-clean';
 import jshint from 'gulp-jshint';
 import babel from 'gulp-babel';
-import browserify from 'browserify';
-import babelify from 'babelify';
-import vinylStream from 'vinyl-source-stream';
-import vinylBuffer from 'vinyl-buffer';
-import uglify from 'gulp-uglify';
-import sourcemaps from 'gulp-sourcemaps';
 
 const pkg = require('./package.json');
-
-const argv = yargs.argv;
 
 const paths = {
     project: './',

@@ -1,41 +1,70 @@
 import Logger from 'septima-utils/logger';
-import Caller from 'septima-utils/caller';
 
 const global = window;
+
+function firstSlash(aValue) {
+    if (!aValue.startsWith('/'))
+        aValue = `/${aValue}`;
+    if (aValue.endsWith('/'))
+        aValue = aValue.substring(0, aValue.length - 1);
+    return aValue;
+}
 
 if (!global.septimajs) {
     const config = {};
     ((() => {
-        let sourcePath = '/';
-        let apiUri = '/application';
-        Object.defineProperty(config, 'sourcePath', {
+        let dataUri = '/data';
+        Object.defineProperty(config, 'dataUri', {
             get: function () {
-                return sourcePath;
+                return dataUri;
             },
             set: function (aValue) {
-                if (aValue) {
-                    sourcePath = aValue;
-                    if (!sourcePath.endsWith("/")) {
-                        sourcePath = `${sourcePath}/`;
-                    }
-                    if (!sourcePath.startsWith("/")) {
-                        sourcePath = `/${sourcePath}`;
-                    }
-                } else {
-                    sourcePath = "/";
-                }
+                dataUri = firstSlash(aValue);
             }
         });
-        Object.defineProperty(config, 'apiUri', {
+        let schemaUri = '/schema';
+        Object.defineProperty(config, 'schemaUri', {
             get: function () {
-                return apiUri;
+                return schemaUri;
             },
             set: function (aValue) {
-                if (!aValue.startsWith('/'))
-                    aValue = `/${aValue}`;
-                if (aValue.endsWith('/'))
-                    aValue = aValue.substring(0, aValue.length - 1);
-                apiUri = aValue;
+                schemaUri = firstSlash(aValue);
+            }
+        });
+        let parametersUri = '/parameters';
+        Object.defineProperty(config, 'parametersUri', {
+            get: function () {
+                return parametersUri;
+            },
+            set: function (aValue) {
+                parametersUri = firstSlash(aValue);
+            }
+        });
+        let commitUri = '/commit';
+        Object.defineProperty(config, 'commitUri', {
+            get: function () {
+                return commitUri;
+            },
+            set: function (aValue) {
+                commitUri = firstSlash(aValue);
+            }
+        });
+        let loggedInUri = '/logged-in';
+        Object.defineProperty(config, 'loggedInUri', {
+            get: function () {
+                return loggedInUri;
+            },
+            set: function (aValue) {
+                loggedInUri = firstSlash(aValue);
+            }
+        });
+        let logoutUri = '/logout';
+        Object.defineProperty(config, 'logoutUri', {
+            get: function () {
+                return logoutUri;
+            },
+            set: function (aValue) {
+                logoutUri = firstSlash(aValue);
             }
         });
     })());
@@ -44,18 +73,6 @@ if (!global.septimajs) {
         config
     };
     Object.seal(global.septimajs);
-}
-
-function lookupCallerJsFile() {
-    try {
-        throw new Error("Current application file test");
-    } catch (ex) {
-        return Caller.lookupJsFile(ex);
-    }
-}
-
-function lookupCallerJsDir() {
-    return Caller.lookupDir(lookupCallerJsFile());
 }
 
 function hostPageBaseURL() {
@@ -90,81 +107,67 @@ function relativeUri() {
     return pageUrl;
 }
 
-function resourceUri(aResourceName) {
-    if (/https?:\//.test(aResourceName))
-        return aResourceName;
-    else {
-        return relativeUri() + global.septimajs.config.sourcePath + aResourceName;
-    }
-}
-
-function toFilyAppModuleId(relativePath, startPoint) {
-    const moduleIdNormalizer = document.createElement('div');
-    moduleIdNormalizer.innerHTML = `<a href="${startPoint}/${relativePath}">o</a>`;
-    // TODO: check if decodeURIComponent is applicable instead of decodeURI.
-    const mormalizedAbsoluteModuleUrl = decodeURI(moduleIdNormalizer.firstChild.href);
-    const hostContextPrefix = relativeUri() + global.septimajs.config.sourcePath;
-    const hostContextNormalizer = document.createElement('div');
-    hostContextNormalizer.innerHTML = `<a href="${hostContextPrefix}">o</a>`;
-    const mormalizedHostContextPrefix = decodeURI(hostContextNormalizer.firstChild.href);
-    const mormalizedRelativeModuleUrl = mormalizedAbsoluteModuleUrl.substring(mormalizedHostContextPrefix.length);
-    if (mormalizedRelativeModuleUrl === '')
-        throw `Module reference '${relativePath}' couldn't be resolved, starting from '${startPoint}'`;
-    return mormalizedRelativeModuleUrl;
-}
-
-function load(resourceName, binary, manager) {
-    let url;
-    if (resourceName.startsWith('./') || resourceName.startsWith('../')) {
-        const callerDir = lookupCallerJsDir();
-        url = resourceUri(toFilyAppModuleId(resourceName, callerDir));
-    } else {
-        url = resourceUri(resourceName);
-    }
+function load(url, binary, manager) {
     return startDownloadRequest(url, binary ? 'arraybuffer' : '', manager)
-            .then(xhr => {
-                if (200 <= xhr.status && xhr.status < 300) {
-                    if (xhr.responseType === 'arraybuffer') {
-                        const buffer = xhr.response;
-                        buffer.length = buffer.byteLength;
-                        return buffer;
-                    } else {
-                        return xhr.responseText;
-                    }
+        .then(xhr => {
+            if (200 <= xhr.status && xhr.status < 300) {
+                if (xhr.responseType === 'arraybuffer') {
+                    const buffer = xhr.response;
+                    buffer.length = buffer.byteLength;
+                    return buffer;
                 } else {
-                    throw xhr.statusText;
+                    return xhr.responseText;
                 }
-            })
-            .catch(aResult => {
-                throw aResult.status ? `${aResult.status} : ${aResult.statusText}` : "It seems, that request has been cancelled. See browser's console for more details.";
-            });
+            } else {
+                throw xhr.statusText;
+            }
+        })
+        .catch(aResult => {
+            throw aResult.status ? `${aResult.status} : ${aResult.statusText}` : "It seems, that request has been cancelled. See browser's console for more details.";
+        });
 }
 
-function upload(aFile, aName, onComplete, onProgresss, onFailure) {
+function download(from, name) {
+    const a = document.createElement('a');
+    a.download = name ? name : '';
+    a.style.display = 'none';
+    a.style.visibility = 'hidden';
+    a.href = from;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function isJsonResponse(xhr) {
+    let responseType = xhr.getResponseHeader("content-type");
+    if (responseType) {
+        responseType = responseType.toLowerCase();
+        return responseType.includes("application/json") ||
+            responseType.includes("application/javascript") ||
+            responseType.includes("text/json") ||
+            responseType.includes("text/javascript");
+    } else {
+        return false;
+    }
+}
+
+function upload(aUri, aFile, aName, onComplete, onProgress, onFailure) {
     if (aFile) {
         let completed = false;
-        return startUploadRequest(aFile, aName, aResult => {
+        return startUploadRequest(aUri, aFile, aName, aResult => {
             completed = true;
             if (onComplete) {
-                onComplete(JSON.parse(aResult));
+                onComplete(aResult);
             }
         }, aResult => {
-            try {
-                if (!completed) {
-                    if (onProgresss) {
-                        onProgresss(aResult);
-                    }
+            if (!completed) {
+                if (onProgress) {
+                    onProgress(aResult);
                 }
-            } catch (ex) {
-                Logger.severe(ex);
             }
         }, reason => {
             if (onFailure) {
-                try {
-                    onFailure(reason);
-                } catch (ex) {
-                    Logger.severe(ex);
-                }
+                onFailure(reason);
             }
         });
     }
@@ -197,37 +200,53 @@ function startDownloadRequest(url, responseType, manager) {
     });
 }
 
-function startUploadRequest(aFile, aName, onComplete, onProgress, onFailure) {
+function startUploadRequest(aUri, aFile, aName, onComplete, onProgress, onFailure) {
     const req = new XMLHttpRequest();
-    req.open('post', remoteApi() + global.septimajs.config.apiUri);
+    req.open('post', remoteApi() + "/" + aUri);
     if (req.upload) {
-        req.upload.onprogress = aProgressEvent => {
+        req.upload.onloadstart = aEvent => {
             if (onProgress) {
-                onProgress(aProgressEvent);
+                onProgress(aEvent);
             }
         };
 
-        req.upload.onloadend = aProgressEvent => {
+        req.upload.onprogress = aEvent => {
             if (onProgress) {
-                onProgress(aProgressEvent);
+                onProgress(aEvent);
             }
         };
 
-        req.upload.ontimeout = aProgressEvent => {
+        req.upload.onload = aEvent => {
+            if (onProgress) {
+                onProgress(aEvent);
+            }
+        };
+
+        req.upload.onloadend = aEvent => {
+            // No op here because we handle errors explicitly and success we handle explicitly also
+        };
+
+        req.upload.ontimeout = aEvent => {
             if (onFailure) {
                 onFailure("Upload timed out");
+            } else {
+                Logger.severe('onFailure callback missing');
             }
         };
 
         req.upload.onabort = aEvent => {
             if (onFailure) {
                 onFailure("Upload aborted");
+            } else {
+                Logger.severe('onFailure callback missing');
             }
         };
 
-        req.upload.onerror = aEvent => {
+        req.upload.onerror = anEvent => {
             if (onFailure) {
-                onFailure(req.responseText ? req.responseText : (`${req.status} : ${req.statusText}`));
+                onFailure(`error: ${anEvent.error}; detail: ${anEvent.detail}`);
+            } else {
+                Logger.severe('onFailure callback missing');
             }
         };
     }
@@ -238,15 +257,13 @@ function startUploadRequest(aFile, aName, onComplete, onProgress, onFailure) {
     req.onreadystatechange = xhr => {
         if (req.readyState === 4 /*RequestState.DONE*/) {
             req.onreadystatechange = null;
-            if (200 <= req.status && req.status < 300) {
+            if (req.status === 200) {
                 if (onComplete) {
-                    onComplete(req.responseText);
+                    onComplete(isJsonResponse(req) ? JSON.parse(req.responseText) : req.responseText);
                 }
-            } else {
-                if (req.status === 0) {
-                    onFailure("Upload canceled");
-                } else {
-                    onFailure(req.responseText ? req.responseText : (`${req.status} : ${req.statusText}`));
+            } else if(req.status === 201) {
+                if (onComplete) {
+                    onComplete(req.getResponseHeader('Location'));
                 }
             }
         }
@@ -259,17 +276,11 @@ function startUploadRequest(aFile, aName, onComplete, onProgress, onFailure) {
     };
 }
 
-function Icon() {}
+function Icon() {
+}
 
-function loadIcon(aResourceName) {
+function loadIcon(url) {
     return new Promise((resolve, reject) => {
-        let url;
-        if (aResourceName.startsWith('./') || aResourceName.startsWith('../')) {
-            const callerDir = lookupCallerJsDir();
-            url = resourceUri(toFilyAppModuleId(aResourceName, callerDir));
-        } else {
-            url = resourceUri(aResourceName);
-        }
         const image = document.createElement('img');
         image.onload = () => {
             image.onload = null;
@@ -284,26 +295,24 @@ function loadIcon(aResourceName) {
         image.src = url;
     });
 }
+
 Object.defineProperty(Icon, 'load', {
     get: function () {
         return loadIcon;
     }
 });
 
-
 const module = {};
 
 Object.defineProperty(module, 'Icon', {
     enumerable: true,
-    get: function () {
-        return Icon;
-    }
+    configurable: false,
+    value: Icon
 });
 Object.defineProperty(module, 'upload', {
     enumerable: true,
-    get: function () {
-        return upload;
-    }
+    configurable: false,
+    value: upload
 });
 Object.defineProperty(module, 'load', {
     enumerable: true,
@@ -319,10 +328,10 @@ Object.defineProperty(module, 'loadText', {
         return load(aResName, false, onSuccess, onFailure);
     }
 });
-Object.defineProperty(module, 'toFilyAppModuleId', {
+Object.defineProperty(module, 'download', {
     enumerable: true,
     configurable: false,
-    value: toFilyAppModuleId
+    value: download
 });
 Object.defineProperty(module, 'hostPageBaseURL', {
     enumerable: true,

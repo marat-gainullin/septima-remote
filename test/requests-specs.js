@@ -1,6 +1,5 @@
 /* global expect */
 import Id from 'septima-utils/id';
-import Invoke from 'septima-utils/invoke';
 import Requests from '../src/requests';
 import Resource from '../src/resource';
 import mockSeptimaServer from './server-mock';
@@ -14,7 +13,7 @@ describe('Septima Requests. ', () => {
     });
 
     it('commit(insert -> update -> delete).success', done => {
-        const newPetId = Id.generate();
+        const newPetId = Id.next();
         const manager = {};
         Requests.requestCommit([
             {
@@ -28,8 +27,7 @@ describe('Septima Requests. ', () => {
                 }
             }
         ], manager)
-                .then(result => {
-                    expect(result).toBeDefined();
+                .then(result => {expect(result).toBeDefined();
                     expect(result).toEqual(1);
                     return Requests.requestCommit([
                         {
@@ -98,7 +96,7 @@ describe('Septima Requests. ', () => {
                 kind: 'insert',
                 entity: 'absent-entity',
                 data: {
-                    pets_id: Id.generate(),
+                    pets_id: Id.next(),
                     type_id: 142841300155478,
                     owner_id: 142841834950629,
                     name: 'test-pet'
@@ -145,17 +143,14 @@ describe('Septima Requests. ', () => {
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
     });
-    it('entity.success.1', done => {
+    it('schema.success.1', done => {
         const request = new Requests.Cancelable();
-        Requests.requestEntity('pets', request)
-                .then(petsEntity => {
-                    expect(petsEntity).toBeDefined();
-                    expect(petsEntity.fields).toBeDefined();
-                    expect(petsEntity.fields.length).toBeDefined();
-                    expect(petsEntity.fields.length).toEqual(5);
-                    expect(petsEntity.parameters).toBeDefined();
-                    expect(petsEntity.parameters.length).toBeDefined();
-                    expect(petsEntity.title).toBeDefined();
+        Requests.requestSchema('pets', request)
+                .then(petsFields => {
+                    expect(petsFields).toBeDefined();
+                    expect(petsFields.pets_id).toBeDefined();
+                    expect(petsFields.birthdate).toBeDefined();
+                    expect(petsFields.type_id).toBeDefined();
                     done();
                 })
                 .catch(e => {
@@ -164,31 +159,24 @@ describe('Septima Requests. ', () => {
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
     });
-    it('entity.success.2', done => {
+    it('schema.success.2', done => {
         const request = new Requests.Cancelable();
-        Requests.requestEntity('fake-pets', request)
-                .then(petsEntity => {
-                    expect(petsEntity).toBeDefined();
-                    expect(petsEntity.fields).toBeDefined();
-                    expect(petsEntity.fields.length).toBeDefined();
-                    expect(petsEntity.fields.length).toEqual(0);
-                    expect(petsEntity.parameters).toBeDefined();
-                    expect(petsEntity.parameters.length).toBeDefined();
-                    expect(petsEntity.title).toBeDefined();
-                    expect(petsEntity).toBeDefined();
+        Requests.requestSchema('fake-pets', request)
+                .then(fakePetsFields => {
+                    expect(fakePetsFields).toBeDefined();
+                    expect(fakePetsFields.fake_pets_id).toBeDefined();
                     done();
                 })
                 .catch(e => {
-                    fail(e);
-                    done();
+                    done.fail(e);
                 });
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
     });
-    it('entity.failure.1', done => {
+    it('schema.failure', done => {
         const request = new Requests.Cancelable();
-        Requests.requestEntity('absent-entity', request)
-                .then(entity => {
+        Requests.requestSchema('absent-entity', request)
+                .then(fields => {
                     done.fail('Request about absent entity should lead to an error.');
                 })
                 .catch(e => {
@@ -198,12 +186,39 @@ describe('Septima Requests. ', () => {
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
     });
-    it('entity.failure.cyclic', done => {
+    it('schema.failure.cyclic', done => {
         pending('Till cyclic dependencies in entities detection');
         const request = new Requests.Cancelable();
-        Requests.requestEntity('cyclicPets', request)
-                .then(entity => {
+        Requests.requestSchema('cyclicPets', request)
+                .then(fields => {
                     done.fail('Request about entity with cyclic reference should lead to an error.');
+                })
+                .catch(e => {
+                    expect(e).toBeDefined();
+                    done();
+                });
+        expect(request).toBeDefined();
+        expect(request.cancel).toBeDefined();
+    });
+    it('parameters.success', done => {
+        const request = new Requests.Cancelable();
+        Requests.requestParameters('pets', request)
+            .then(petsParameters => {
+                expect(petsParameters).toBeDefined();
+                expect(petsParameters.owner).toBeDefined();
+                done();
+            })
+            .catch(e => {
+                done.fail(e);
+            });
+        expect(request).toBeDefined();
+        expect(request.cancel).toBeDefined();
+    });
+    it('parameters.failure', done => {
+        const request = new Requests.Cancelable();
+        Requests.requestParameters('absent-entity', request)
+                .then(petsParameters => {
+                    done.fail('Request about absent entity should lead to an error.');
                 })
                 .catch(e => {
                     expect(e).toBeDefined();
@@ -227,13 +242,13 @@ describe('Septima Requests. ', () => {
         expect(request.cancel).toBeDefined();
     });
     it('loggedInUser.failure', done => {
-        const apiUri = window.septimajs.config.apiUri;
-        window.septimajs.config.apiUri = 'absent-uri';
+        const loggedInUri = window.septimajs.config.loggedInUri;
+        window.septimajs.config.loggedInUri = 'absent-uri';
         try {
             const request = new Requests.Cancelable();
             Requests.requestLoggedInUser(request)
                     .then(() => {
-                        done.fail("Invalid 'loggedInUser' request should lead to anerror");
+                        done.fail("Invalid 'loggedInUser' request should lead to an error");
                     })
                     .catch(e => {
                         expect(e).toBeDefined();
@@ -242,7 +257,7 @@ describe('Septima Requests. ', () => {
             expect(request).toBeDefined();
             expect(request.cancel).toBeDefined();
         } finally {
-            window.septimajs.config.apiUri = apiUri;
+            window.septimajs.config.loggedInUri = loggedInUri;
         }
     });
     it('logout.success', done => {
@@ -259,8 +274,8 @@ describe('Septima Requests. ', () => {
         expect(request.cancel).toBeDefined();
     });
     it('logout.failure', done => {
-        const apiUri = window.septimajs.config.apiUri;
-        window.septimajs.config.apiUri = 'absent-uri';
+        const logoutUri = window.septimajs.config.logoutUri;
+        window.septimajs.config.logoutUri = 'absent-uri';
         try {
             const request = new Requests.Cancelable();
             Requests.requestLogout(request)
@@ -275,12 +290,12 @@ describe('Septima Requests. ', () => {
             expect(request).toBeDefined();
             expect(request.cancel).toBeDefined();
         } finally {
-            window.septimajs.config.apiUri = apiUri;
+            window.septimajs.config.logoutUri = logoutUri;
         }
     });
-    it('serverMethodExecution.success', done => {
+    it('rpc.success', done => {
         const request = new Requests.Cancelable();
-        Requests.requestServerMethodExecution('assets/server-modules/test-server-module', 'echo', [
+        Requests.requestRpc('assets/server-modules/test-server-module', 'echo', [
             JSON.stringify(0),
             JSON.stringify(1),
             JSON.stringify(2),
@@ -296,9 +311,9 @@ describe('Septima Requests. ', () => {
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
     });
-    it('serverMethodExecution.failure.1', done => {
+    it('rpc.failure.1', done => {
         const request = new Requests.Cancelable();
-        Requests.requestServerMethodExecution('absent-server-module', 'echo', [
+        Requests.requestRpc('absent-server-module', 'echo', [
             JSON.stringify(0),
             JSON.stringify(1),
             JSON.stringify(2),
@@ -313,9 +328,9 @@ describe('Septima Requests. ', () => {
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
     });
-    it('serverMethodExecution.failure.2', done => {
+    it('rpc.failure.2', done => {
         const request = new Requests.Cancelable();
-        Requests.requestServerMethodExecution('assets/server-modules/test-server-module', 'failureEcho', [
+        Requests.requestRpc('assets/server-modules/test-server-module', 'failureEcho', [
             JSON.stringify(0),
             JSON.stringify(1),
             JSON.stringify(2),
@@ -331,9 +346,9 @@ describe('Septima Requests. ', () => {
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
     });
-    it('submitForm.success', done => {
+    it('submitForm.get.success', done => {
         const request = new Requests.Cancelable();
-        Requests.submitForm(`${Resource.remoteApi() + window.septimajs.config.apiUri}/test-form`, 'get', {
+        Requests.submitForm(`${Resource.remoteApi()}/test-form`, 'get', {
             name: 'Jane',
             age: 22
         }, request)
@@ -349,9 +364,43 @@ describe('Septima Requests. ', () => {
         expect(request).toBeDefined();
         expect(request.cancel).toBeDefined();
     });
-    it('submitForm.failure', done => {
+    it('submitForm.post.success', done => {
         const request = new Requests.Cancelable();
-        Requests.submitForm(`${Resource.remoteApi() + window.septimajs.config.apiUri}/absent-form`, 'get', {
+        Requests.submitForm(`${Resource.remoteApi()}/test-form`, 'post', {
+            name: 'Jane',
+            age: 22
+        }, request)
+                .then(xhr => {
+                    expect(xhr).toBeDefined();
+                    expect(xhr.responseText).toBeDefined();
+                    expect(JSON.parse(xhr.responseText)).toEqual('Jane22');
+                    done();
+                })
+                .catch(e => {
+                    done.fail(e);
+                });
+        expect(request).toBeDefined();
+        expect(request.cancel).toBeDefined();
+    });
+    it('submitForm.get.failure', done => {
+        const request = new Requests.Cancelable();
+        Requests.submitForm(`${Resource.remoteApi()}/absent-form`, 'get', {
+            name: 'Jane',
+            age: 22
+        }, request)
+                .then(xhr => {
+                    done.fail('Form submission to absent endpoint should lead to error');
+                })
+                .catch(e => {
+                    expect(e).toBeDefined();
+                    done();
+                });
+        expect(request).toBeDefined();
+        expect(request.cancel).toBeDefined();
+    });
+    it('submitForm.post.failure', done => {
+        const request = new Requests.Cancelable();
+        Requests.submitForm(`${Resource.remoteApi()}/absent-form`, 'post', {
             name: 'Jane',
             age: 22
         }, request)

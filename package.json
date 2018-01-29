@@ -1,7 +1,7 @@
 {
   "name": "septima-remote",
-  "version": "0.0.5",
-  "description": "Septima rpc requests and resources locator.",
+  "version": "0.0.7",
+  "description": "Septima.js requests and resources locator.",
   "main": "index.js",
   "repository": "https://github.com/marat-gainullin/septima-remote.git",
   "author": "marat-gainullin <mg@altsoft.biz>",
@@ -41,6 +41,6 @@
     "yargs": "^9.0.1"
   },
   "dependencies": {
-    "septima-utils": "^0.0.4"
+    "septima-utils": "^0.0.5"
   }
 }

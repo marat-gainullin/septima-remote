@@ -13,7 +13,7 @@ describe('Septima Rpc', () => {
     });
 
     it('Rpc.proxy', (done) => {
-        const proxy = new Rpc.proxy('assets/server-modules/test-server-module');
+        const proxy = new Rpc.proxy('test-server-module');
         const request = new Requests.Cancelable();
         proxy.echo(1, 2, request)
                 .then(result => {
@@ -22,13 +22,5 @@ describe('Septima Rpc', () => {
                 })
                 .catch(done.fail);
         expect(request.cancel).toBeDefined();
-    });
-    it('Rpc.requireRemotes', (done) => {
-        Rpc.requireRemotes('assets/server-modules/test-server-module')
-                .then((proxy) => {
-                    expect(proxy).toBeDefined();
-                    done();
-                })
-                .catch(done.fail);
     });
 });

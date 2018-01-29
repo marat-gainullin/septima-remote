@@ -1,15 +1,35 @@
 import Sinon from 'sinon';
 import Id from 'septima-utils/id';
 import Invoke from 'septima-utils/invoke';
-import Requests from '../src/requests';
 
 export default () => {
     let petsData = [
-        {pets_id: 142841883974964, owner_id: 142841834950629, type_id: 142841300155478, name: 'Vasya', birthdate: new Date('2015-04-29T00:00:00.0')},
-        {pets_id: 146158847483835, owner_id: 146158832109238, type_id: 142850046716850, name: 'Mickey', birthdate: new Date('2015-01-14T15:48:05.124')}
+        {
+            pets_id: 142841883974964,
+            owner_id: 142841834950629,
+            type_id: 142841300155478,
+            name: 'Vasya',
+            birthdate: new Date('2015-04-29T00:00:00.0')
+        },
+        {
+            pets_id: 146158847483835,
+            owner_id: 146158832109238,
+            type_id: 142850046716850,
+            name: 'Mickey',
+            birthdate: new Date('2015-01-14T15:48:05.124')
+        }
     ];
+
     function isHandledUrl(url) {
-        return url.includes('/application');
+        return url.includes('/avatars') ||
+            url.includes('/commit') ||
+            url.includes('/schema') ||
+            url.includes('/parameters') ||
+            url.includes('/data') ||
+            url.includes('/logged-in') ||
+            url.includes('/logout') ||
+            url.includes('/test-server-module') ||
+            url.includes('/test-form');
     }
 
     let xhrSpy = Sinon.useFakeXMLHttpRequest();
@@ -29,124 +49,181 @@ export default () => {
 
         Invoke.later(() => {
             if (isHandledUrl(xhr.url)) {
-                if (xhr.url.endsWith(`application?__type=${Requests.RequestTypes.rqAppEntity}&__queryId=pets`)) {
-                    respondObj(xhr, {
-                        appelement: 'pets',
-                        title: 'Pets entity',
-                        fields: [
-                            {name: 'pets_id', description: 'Pet primary key', type: 'Number', pk: true, nullable: false},
-                            {name: 'type_id', description: "Pet's type reference", type: 'Number', nullable: false},
-                            {name: 'owner_id', description: 'Owner reference field', type: 'Number', nullable: false},
-                            {name: 'name', description: "Pet's name", type: 'String', nullable: false},
-                            {name: 'birthdate', description: "Pet's bith date", type: 'Date', nullable: true}
-                        ],
-                        parameters: []
-                    });
-                } else if (xhr.url.endsWith(`application?__type=${Requests.RequestTypes.rqAppEntity}&__queryId=fake-pets`)) {
-                    respondObj(xhr, {
-                        appelement: 'fake-pets',
-                        title: 'Fake pets entity',
-                        fields: [],
-                        parameters: []
-                    });
-                } else if (xhr.url.endsWith(`application?__type=${Requests.RequestTypes.rqExecuteQuery}&__queryId=pets`)) {
-                    respondObj(xhr, petsData);
-                } else if (xhr.url.endsWith(`application?__type=${Requests.RequestTypes.rqCredential}`)) {
-                    respondObj(xhr, {userName: `anonymous-${Id.generate()}`});
-                } else if (xhr.url.endsWith(`application?__type=${Requests.RequestTypes.rqLogout}`)) {
-                    respondObj(xhr, {});
-                } else if (xhr.url.includes(`application/test-form`)) {
-                    const name = xhr.url.match(/name=([\da-zA-Z]+)/)[1];
-                    const age = xhr.url.match(/age=([\da-zA-Z]+)/)[1];
-                    respondObj(xhr, name + age);
-                } else if (xhr.url.endsWith(`application?__type=${Requests.RequestTypes.rqCommit}`)) {
-                    if (xhr.readyState !== 0) {
-                        const log = JSON.parse(xhr.requestBody);
-                        let affected = 0;
-                        try {
-                            log.forEach((item) => {
-                                console.log(item);
-                                switch (item.entity) {
-                                    case 'pets':
-                                        switch (item.kind) {
-                                            case 'insert':
-                                                if (!('pets_id' in item.data))
-                                                    throw `Primary key datum missing for entity: ${item.entity}`;
-                                                petsData.push(item.data);
-                                                affected++;
-                                                break;
-                                            case 'delete':
-                                                const werePets = petsData.length;
-                                                petsData = petsData.filter((pet) => {
-                                                    return pet.pets_id !== item.keys.pets_id;
-                                                });
-                                                affected += werePets - petsData.length;
-                                                break;
-                                            case 'update':
-                                                petsData.filter((pet) => {
-                                                    return pet.pets_id === item.keys.pets_id;
-                                                }).forEach((pet) => {
-                                                    for (let d in item.data) {
-                                                        pet[d] = item.data[d];
-                                                        affected++;
-                                                    }
-                                                });
-                                                break;
-                                        }
-                                        break;
-                                    case 'add-pet':
-                                        switch (item.kind) {
-                                            case 'command':
-                                                petsData.push({
-                                                    pets_id: item.parameters.id,
-                                                    owner_id: item.parameters.ownerId,
-                                                    type_id: item.parameters.typeId,
-                                                    name: item.parameters.name
-                                                });
-                                                affected++;
-                                                break;
-                                        }
-                                        break;
-                                    default:
-                                        throw `Unknown entity ${item.entity}`;
-                                }
-                            });
-                            respondObj(xhr, affected);
-                        } catch (ex) {
-                            respondObj(xhr, JSON.stringify(ex), 403);
-                        }
+                if (xhr.method.toLowerCase() === 'get') {
+                    if (xhr.url.endsWith('schema/pets')) {
+                        respondObj(xhr, {
+                            pets_id: {
+                                description: 'Pet primary key',
+                                type: 'Number',
+                                pk: true,
+                                nullable: false
+                            },
+                            type_id: {description: "Pet's type reference", type: 'Number', nullable: false},
+                            owner_id: {
+                                description: 'Owner reference field',
+                                type: 'Number',
+                                nullable: false
+                            },
+                            name: {description: "Pet's name", type: 'String', nullable: false},
+                            birthdate: {description: "Pet's bith date", type: 'Date', nullable: true}
+                        });
+                    } else if (xhr.url.endsWith('schema/fake-pets')) {
+                        respondObj(xhr, {fake_pets_id: {}});
+                    } else if (xhr.url.endsWith('parameters/pets')) {
+                        respondObj(xhr, {
+                            owner: {
+                                description: "Pet's owner key",
+                                type: 'Number'
+                            }
+                        });
+                    } else if (xhr.url.endsWith('data/pets')) {
+                        respondObj(xhr, petsData);
+                    } else if (xhr.url.endsWith('logged-in')) {
+                        respondObj(xhr, {userName: `anonymous-${Id.next()}`});
+                    } else if (xhr.url.endsWith('logout')) {
+                        respondObj(xhr, {});
+                    } else if (xhr.url.includes('test-form')) {
+                        const name = xhr.url.match(/name=([\da-zA-Z]+)/)[1];
+                        const age = xhr.url.match(/age=([\da-zA-Z]+)/)[1];
+                        respondObj(xhr, name + age);
                     } else {
-                        xhr.error();
+                        respondObj(xhr, `Unknown url for GET: ${xhr.url}`, 404);
                     }
-                } else if (xhr.method === 'POST') {
-                    const moduleName = xhr.requestBody.match(/__moduleName=([\da-zA-Z%\-]+)/)[1].replace(/%2F/gi, '/');
-                    const methodName = xhr.requestBody.match(/__methodName=([\da-zA-Z]+)/)[1];
-                    const params = xhr.requestBody.match(/__param\[\]=([\da-zA-Z]+)/g).map((param) => {
-                        return param.substring('__param[]='.length, param.length);
-                    });
-                    try {
-                        switch (moduleName) {
-                            case 'assets/server-modules/test-server-module':
-                                switch (methodName) {
-                                    case 'echo':
-                                        respondObj(xhr, params.join(' - '));
-                                        break;
-                                    case 'failureEcho':
-                                        respondObj(xhr, {description: 'Application level error'}, 403);
-                                        break;
-                                    default:
-                                        throw `Unknown module method name: ${moduleName}.${methodName}`;
+                } else if (xhr.method.toLowerCase() === 'post') {
+                    if (xhr.url.includes('/avatars')) {
+                        if (xhr.url.includes('/avatars-error')) {
+                            Invoke.later(() => {
+                                xhr.upload.onloadstart({loaded: 0, total: 10});
+                                xhr.upload.onprogress({loaded: 3, total: 10});
+                                if (xhr.url.includes('/avatars-error-timeout')) {
+                                    xhr.upload.ontimeout({loaded: 0, total: 10});
+                                    xhr.upload.onloadend({loaded: 3, total: 10});
+                                } else if (xhr.url.includes('/avatars-error-io')) {
+                                    xhr.upload.onerror({detail: 0, error: 'IOException occured'});
+                                    xhr.upload.onloadend({loaded: 3, total: 10});
+                                } else if (xhr.url.includes('/avatars-error-abort')) {
+                                    xhr.upload.onabort({detail: 0});
+                                    xhr.upload.onloadend({loaded: 3, total: 10});
+                                } else {
+                                    throw `Unknown avatar erroneous upload url '${xhr.url}'`;
                                 }
-                                break;
-                            default:
-                                throw `Unknown server module: ${moduleName}`;
+                                xhr.readyState = 4;
+                                xhr.status = 0;
+                                xhr.onreadystatechange();
+                            });
+                        } else {
+                            Invoke.later(() => {
+                                xhr.upload.onloadstart({loaded: 0, total: 10});
+                                xhr.upload.onprogress({loaded: 0, total: 10});
+                                xhr.upload.onprogress({loaded: 5, total: 10});
+                                xhr.upload.onprogress({loaded: 10, total: 10});
+                                xhr.upload.onload({loaded: 10, total: 10});
+                                xhr.upload.onloadend({loaded: 10, total: 10});
+                                Invoke.later(() => {
+                                    if (xhr.url.includes('/avatars-plain')) {
+                                        xhr.responseText = xhr.url + '/just-uploaded';
+                                        xhr.status = 200;
+                                        xhr.responseHeaders = {};
+                                    } else if (xhr.url.includes('/avatars-json')) {
+                                        xhr.responseText = JSON.stringify(xhr.url + '/just-uploaded');
+                                        xhr.status = 200;
+                                        xhr.responseHeaders = {'content-type': 'application/json;charset=utf-8'};
+                                    } else if (xhr.url.includes('/avatars-location')) {
+                                        xhr.status = 201;
+                                        xhr.responseHeaders = {'location': xhr.url + '/just-uploaded'};
+                                    }
+                                    xhr.readyState = 4;
+                                    xhr.onreadystatechange();
+                                });
+                            });
                         }
-                    } catch (ex) {
-                        respondObj(xhr, JSON.stringify(ex), 403);
+                        //xhr.upload.ontimeout({});
+                        //xhr.upload.onabort({});
+                        //xhr.upload.onerror({});
+                        //xhr.upload.onload({});
+                    } else if (xhr.url.includes('test-server-module')) {
+                        const params = JSON.parse(xhr.requestBody);
+                        const moduleName = 'test-server-module';
+                        try {
+                            if (xhr.url.endsWith(moduleName + '/echo')) {
+                                respondObj(xhr, params.join(' - '));
+                            } else if (xhr.url.endsWith(moduleName + '/failureEcho')) {
+                                respondObj(xhr, {description: 'Application level error'}, 405);
+                            } else {
+                                throw `Unknown RPC end point: ${xhr.url}`;
+                            }
+                        } catch (ex) {
+                            respondObj(xhr, JSON.stringify(ex), 405);
+                        }
+                    } else if (xhr.url.endsWith('commit')) {
+                        if (xhr.readyState !== 0) {
+                            const log = JSON.parse(xhr.requestBody);
+                            let affected = 0;
+                            try {
+                                log.forEach((item) => {
+                                    console.log(item);
+                                    switch (item.entity) {
+                                        case 'pets':
+                                            switch (item.kind) {
+                                                case 'insert':
+                                                    if (!('pets_id' in item.data))
+                                                        throw `Primary key datum missing for entity: ${item.entity}`;
+                                                    petsData.push(item.data);
+                                                    affected++;
+                                                    break;
+                                                case 'delete':
+                                                    const werePets = petsData.length;
+                                                    petsData = petsData.filter((pet) => {
+                                                        return pet.pets_id !== item.keys.pets_id;
+                                                    });
+                                                    affected += werePets - petsData.length;
+                                                    break;
+                                                case 'update':
+                                                    petsData.filter((pet) => {
+                                                        return pet.pets_id === item.keys.pets_id;
+                                                    }).forEach((pet) => {
+                                                        for (let d in item.data) {
+                                                            pet[d] = item.data[d];
+                                                            affected++;
+                                                        }
+                                                    });
+                                                    break;
+                                            }
+                                            break;
+                                        case 'add-pet':
+                                            switch (item.kind) {
+                                                case 'command':
+                                                    petsData.push({
+                                                        pets_id: item.parameters.id,
+                                                        owner_id: item.parameters.ownerId,
+                                                        type_id: item.parameters.typeId,
+                                                        name: item.parameters.name
+                                                    });
+                                                    affected++;
+                                                    break;
+                                            }
+                                            break;
+                                        default:
+                                            throw `Unknown entity ${item.entity}`;
+                                    }
+                                });
+                                respondObj(xhr, affected);
+                            } catch (ex) {
+                                respondObj(xhr, JSON.stringify(ex), 403);
+                            }
+                        } else {
+                            xhr.error();
+                        }
+                    } else if (xhr.url.includes('test-form')) {
+                        const name = xhr.requestBody.match(/name=([\da-zA-Z]+)/)[1];
+                        const age = xhr.requestBody.match(/age=([\da-zA-Z]+)/)[1];
+                        respondObj(xhr, name + age);
+                    } else {
+                        throw `Unknown url fro POST: ${xhr.url}`;
                     }
                 } else {
                     xhr.respond(404, {"Content-Type": "application/json"},
-                            JSON.stringify({error: `Unknown url: ${xhr.url}`}));
+                        JSON.stringify({error: `Unknown url: ${xhr.url}`}));
                 }
             }
         });
