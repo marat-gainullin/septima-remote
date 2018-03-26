@@ -52,9 +52,127 @@ function createProxy(aModuleName) {
     });
 }
 
+
+function startRequest(url, method, body, bodyType, manager) {
+    return new Promise((resolve, reject) => {
+        const req = new XMLHttpRequest();
+        if (manager) {
+            manager.cancel = function () {
+                req.abort();
+            };
+        }
+        req.open(method, url);
+        if (bodyType) {
+            req.setRequestHeader("Content-Type", bodyType);
+        }
+        // Must set the onreadystatechange handler before calling send().
+        req.onreadystatechange = () => {
+            if (req.readyState === 4 /*RequestState.DONE*/) {
+                req.onreadystatechange = null;
+                if (200 <= req.status && req.status < 300) {
+                    resolve(req);
+                } else {
+                    reject(req);
+                }
+            }
+        };
+        if (body) {
+            req.send(body);
+        } else {
+            req.send();
+        }
+    });
+}
+
+function isJsonResponse(xhr) {
+    let responseType = xhr.getResponseHeader("Content-Type");
+    if (responseType) {
+        responseType = responseType.toLowerCase();
+        return responseType.includes("application/json") ||
+            responseType.includes("application/javascript") ||
+            responseType.includes("text/json") ||
+            responseType.includes("text/javascript");
+    } else {
+        return false;
+    }
+}
+
+function isXmlResponse(xhr) {
+    let responseType = xhr.getResponseHeader("Content-Type");
+    if (responseType) {
+        responseType = responseType.toLowerCase();
+        return (responseType.startsWith("application/") || responseType.startsWith("text/")) && responseType.endsWith("xml"); // application/atom+xml for example
+    } else {
+        return false;
+    }
+}
+
+function ifJsonXmlResponse(xhr) {
+    if (isJsonResponse(xhr)) {
+        return JSON.parse(xhr.responseText);
+    } else if (isXmlResponse(xhr)) {
+        return xhr.responseXML;
+    } else {
+        return xhr.responseText;
+    }
+}
+
+function ifJsonXmlError(xhr) {
+    if (isJsonResponse(xhr)) {
+        throw JSON.parse(xhr.responseText);
+    } else if (isXmlResponse(xhr)) {
+        return xhr.responseXML;
+    } else {
+        throw xhr.responseText ? xhr.responseText : `${xhr.status} : ${xhr.statusText}`;
+    }
+}
+
+class Rest {
+
+    constructor(url) {
+        this.url = url;
+    }
+
+    get(instanceKey, manager) {
+        return startRequest(this.url + (!!instanceKey ? "/" + instanceKey : ""), Requests.Methods.GET, null, null, manager)
+            .then(ifJsonXmlResponse)
+            .catch(ifJsonXmlError);
+    }
+
+    post(instance, manager) {
+        return startRequest(this.url, Requests.Methods.POST, JSON.stringify(instance), 'application/json;charset=utf-8', manager)
+            .then(xhr => {
+                if (xhr.status === 201 && xhr.getResponseHeader("Location")) {
+                    return xhr.getResponseHeader("Location");
+                } else {
+                    return ifJsonXmlResponse(xhr);
+                }
+            })
+            .catch(ifJsonXmlError);
+    }
+
+    put(instanceKey, instance, manager) {
+        return startRequest(this.url + "/" + instanceKey, Requests.Methods.PUT, JSON.stringify(instance), 'application/json;charset=utf-8', manager)
+            .then(ifJsonXmlResponse)
+            .catch(ifJsonXmlError);
+    }
+
+    delete(instanceKey, manager) {
+        return startRequest(this.url + "/" + instanceKey, Requests.Methods.DELETE, null, null, manager)
+            .then(ifJsonXmlResponse)
+            .catch(ifJsonXmlError);
+    }
+
+}
+
+
 const module = {};
 Object.defineProperty(module, 'proxy', {
     enumerable: true,
     value: createProxy
+});
+Object.defineProperty(module, 'Rest', {
+    enumerable: true,
+    value: Rest
 });
 export default module;

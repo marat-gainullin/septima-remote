@@ -20,6 +20,13 @@ export default () => {
         }
     ];
 
+    const restSamples = [
+        {name: 'sample1', flag: false, moment: new Date(), amount: 10},
+        {name: 'sample2', flag: true,  moment: new Date(), amount: 20},
+        {name: 'sample3', flag: false, moment: new Date(), amount: 30},
+        {name: 'sample4', flag: false, moment: new Date(), amount: 40}
+    ];
+
     function isHandledUrl(url) {
         return url.includes('/avatars') ||
             url.includes('/commit') ||
@@ -29,7 +36,8 @@ export default () => {
             url.includes('/logged-in') ||
             url.includes('/logout') ||
             url.includes('/test-server-module') ||
-            url.includes('/test-form');
+            url.includes('/test-form') ||
+            url.includes('/rest-samples');
     }
 
     let xhrSpy = Sinon.useFakeXMLHttpRequest();
@@ -78,6 +86,10 @@ export default () => {
                         });
                     } else if (xhr.url.endsWith('data/pets')) {
                         respondObj(xhr, petsData);
+                    } else if (xhr.url.endsWith('rest-samples')) {
+                        respondObj(xhr, restSamples);
+                    } else if (xhr.url.endsWith('rest-samples/sample2')) {
+                        respondObj(xhr, restSamples[1]);
                     } else if (xhr.url.endsWith('logged-in')) {
                         respondObj(xhr, {userName: `anonymous-${Id.next()}`});
                     } else if (xhr.url.endsWith('logout')) {
@@ -218,8 +230,29 @@ export default () => {
                         const name = xhr.requestBody.match(/name=([\da-zA-Z]+)/)[1];
                         const age = xhr.requestBody.match(/age=([\da-zA-Z]+)/)[1];
                         respondObj(xhr, name + age);
+                    } else if (xhr.url.includes('rest-samples')) {
+                        restSamples.push(JSON.parse(xhr.requestBody));
+                        xhr.respond(201, {"Location": "/rest-samples/sample5"});
                     } else {
-                        throw `Unknown url fro POST: ${xhr.url}`;
+                        throw `Unknown url for POST: ${xhr.url}`;
+                    }
+                } else if (xhr.method.toLowerCase() === 'put') {
+                    if(xhr.url.endsWith('rest-samples/sample3')) {
+                        const sample3 = JSON.parse(xhr.requestBody);
+                        restSamples[2].name = sample3.name;
+                        restSamples[2].flag = sample3.flag;
+                        restSamples[2].moment = new Date(sample3.moment);
+                        restSamples[2].amount = sample3.amount;
+                        xhr.respond(200);
+                    } else {
+                        throw `Unknown url for PUT: ${xhr.url}`;
+                    }
+                } else if (xhr.method.toLowerCase() === 'delete') {
+                    if(xhr.url.endsWith('rest-samples/sample2')) {
+                        restSamples.splice(1, 1);
+                        xhr.respond(200);
+                    } else {
+                        throw `Unknown url for DELETE: ${xhr.url}`;
                     }
                 } else {
                     xhr.respond(404, {"Content-Type": "application/json"},

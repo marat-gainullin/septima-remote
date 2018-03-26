@@ -319,4 +319,9 @@ Object.defineProperty(module, 'Cancelable', {
     configurable: false,
     value: Cancelable
 });
+Object.defineProperty(module, 'Methods', {
+    enumerable: true,
+    configurable: false,
+    value: Methods
+});
 export default module;
