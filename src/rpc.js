@@ -17,20 +17,7 @@ function generateFunction(moduleName, functionName) {
                 break;
             }
         }
-        return Requests.requestRpc(moduleName, functionName, params, manager)
-            .then(result => {
-                if (typeof result === 'object')
-                    return result;
-                else {
-                    let parsed;
-                    try {
-                        parsed = JSON.parse(result, Requests.dateReviver);
-                    } catch (ex) {
-                        parsed = result;
-                    }
-                    return parsed;
-                }
-            });
+        return Requests.requestRpc(moduleName, functionName, params, manager);
     };
 }
 
@@ -84,33 +71,10 @@ function startRequest(url, method, body, bodyType, manager) {
     });
 }
 
-function isJsonResponse(xhr) {
-    let responseType = xhr.getResponseHeader("Content-Type");
-    if (responseType) {
-        responseType = responseType.toLowerCase();
-        return responseType.includes("application/json") ||
-            responseType.includes("application/javascript") ||
-            responseType.includes("text/json") ||
-            responseType.includes("text/javascript");
-    } else {
-        return false;
-    }
-}
-
-function isXmlResponse(xhr) {
-    let responseType = xhr.getResponseHeader("Content-Type");
-    if (responseType) {
-        responseType = responseType.toLowerCase();
-        return (responseType.startsWith("application/") || responseType.startsWith("text/")) && responseType.endsWith("xml"); // application/atom+xml for example
-    } else {
-        return false;
-    }
-}
-
 function ifJsonXmlResponse(xhr) {
-    if (isJsonResponse(xhr)) {
+    if (Requests.isJsonResponse(xhr)) {
         return JSON.parse(xhr.responseText);
-    } else if (isXmlResponse(xhr)) {
+    } else if (Requests.isXmlResponse(xhr)) {
         return xhr.responseXML;
     } else {
         return xhr.responseText;
@@ -118,9 +82,9 @@ function ifJsonXmlResponse(xhr) {
 }
 
 function ifJsonXmlError(xhr) {
-    if (isJsonResponse(xhr)) {
+    if (Requests.isJsonResponse(xhr)) {
         throw JSON.parse(xhr.responseText);
-    } else if (isXmlResponse(xhr)) {
+    } else if (Requests.isXmlResponse(xhr)) {
         return xhr.responseXML;
     } else {
         throw xhr.responseText ? xhr.responseText : `${xhr.status} : ${xhr.statusText}`;
@@ -134,7 +98,7 @@ class Rest {
     }
 
     get(instanceKey, manager) {
-        return startRequest(this.url + (!!instanceKey ? "/" + instanceKey : ""), Requests.Methods.GET, null, null, manager)
+        return startRequest(this.url + (!!instanceKey ? "/" + encodeURIComponent(instanceKey) : ""), Requests.Methods.GET, null, null, manager)
             .then(ifJsonXmlResponse)
             .catch(ifJsonXmlError);
     }
@@ -152,13 +116,13 @@ class Rest {
     }
 
     put(instanceKey, instance, manager) {
-        return startRequest(this.url + "/" + instanceKey, Requests.Methods.PUT, JSON.stringify(instance), 'application/json;charset=utf-8', manager)
+        return startRequest(this.url + "/" + encodeURIComponent(instanceKey), Requests.Methods.PUT, JSON.stringify(instance), 'application/json;charset=utf-8', manager)
             .then(ifJsonXmlResponse)
             .catch(ifJsonXmlError);
     }
 
     delete(instanceKey, manager) {
-        return startRequest(this.url + "/" + instanceKey, Requests.Methods.DELETE, null, null, manager)
+        return startRequest(this.url + "/" + encodeURIComponent(instanceKey), Requests.Methods.DELETE, null, null, manager)
             .then(ifJsonXmlResponse)
             .catch(ifJsonXmlError);
     }

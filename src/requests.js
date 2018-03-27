@@ -118,7 +118,7 @@ function startApiRequest(uri, urlQuery, body, method, contentType, manager) {
 }
 
 function isJsonResponse(xhr) {
-    let responseType = xhr.getResponseHeader("content-type");
+    let responseType = xhr.getResponseHeader("Content-type");
     if (responseType) {
         responseType = responseType.toLowerCase();
         return responseType.includes("application/json") ||
@@ -130,9 +130,23 @@ function isJsonResponse(xhr) {
     }
 }
 
+function isXmlResponse(xhr) {
+    let responseType = xhr.getResponseHeader("Content-Type");
+    if (responseType) {
+        responseType = responseType.toLowerCase();
+        return (responseType.startsWith("application/") || responseType.startsWith("text/")) && responseType.endsWith("xml"); // application/atom+xml for example
+    } else {
+        return false;
+    }
+}
+
+function encodeURIPath(aPath){
+    return aPath.split('/').map(element => encodeURIComponent(element)).join("/");
+}
+
 function requestData(aServerEntityName, aParams, manager) {
     const query = objToParams(aParams);
-    return startApiRequest(global.septimajs.config.dataUri + '/' + aServerEntityName, query, '', Methods.GET, null, manager)
+    return startApiRequest(global.septimajs.config.dataUri + '/' + encodeURIPath(aServerEntityName), query, '', Methods.GET, null, manager)
         .then(xhr => {
             if (isJsonResponse(xhr)) {
                 return JSON.parse(xhr.responseText, dateReviver);
@@ -150,7 +164,7 @@ function requestData(aServerEntityName, aParams, manager) {
 }
 
 function requestSchema(aServerEntityName, manager) {
-    return startApiRequest(global.septimajs.config.schemaUri + '/' + aServerEntityName, null, null, Methods.GET, null, manager)
+    return startApiRequest(global.septimajs.config.schemaUri + '/' + encodeURIPath(aServerEntityName), null, null, Methods.GET, null, manager)
         .then(xhr => {
             if (isJsonResponse(xhr)) {
                 return JSON.parse(xhr.responseText, dateReviver);
@@ -164,7 +178,7 @@ function requestSchema(aServerEntityName, manager) {
 }
 
 function requestParameters(aServerEntityName, manager) {
-    return startApiRequest(global.septimajs.config.parametersUri + '/' + aServerEntityName, null, null, Methods.GET, null, manager)
+    return startApiRequest(global.septimajs.config.parametersUri + '/' + encodeURIPath(aServerEntityName), null, null, Methods.GET, null, manager)
         .then(xhr => {
             if (isJsonResponse(xhr)) {
                 return JSON.parse(xhr.responseText, dateReviver);
@@ -226,12 +240,10 @@ function requestCommit(changeLog, manager) {
 }
 
 function requestRpc(aModuleName, aMethodName, aParams, manager) {
-    return startApiRequest("/" + aModuleName + "/" + aMethodName, null, JSON.stringify(aParams), Methods.POST, 'application/json;charset=utf-8', manager)
+    return startApiRequest("/" + encodeURIPath(aModuleName) + "/" + encodeURIPath(aMethodName), null, JSON.stringify(aParams), Methods.POST, 'application/json;charset=utf-8', manager)
         .then(xhr => {
             if (isJsonResponse(xhr)) {
-                // WARNING!!!Don't edit to JSON.parse()!
-                // It is parsed in high-level js-code.
-                return xhr.responseText;
+                return JSON.parse(xhr.responseText);
             } else {
                 return xhr.responseText;
             }
@@ -323,5 +335,15 @@ Object.defineProperty(module, 'Methods', {
     enumerable: true,
     configurable: false,
     value: Methods
+});
+Object.defineProperty(module, 'isJsonResponse', {
+    enumerable: true,
+    configurable: false,
+    value: isJsonResponse
+});
+Object.defineProperty(module, 'isXmlResponse', {
+    enumerable: true,
+    configurable: false,
+    value: isXmlResponse
 });
 export default module;

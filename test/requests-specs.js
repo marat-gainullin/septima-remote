@@ -302,7 +302,7 @@ describe('Septima Requests. ', () => {
             JSON.stringify(3)], request)
                 .then(echo => {
                     expect(echo).toBeDefined();
-                    expect(JSON.parse(echo)).toEqual('0 - 1 - 2 - 3');
+                    expect(echo).toEqual('0 - 1 - 2 - 3');
                     done();
                 })
                 .catch(e => {
