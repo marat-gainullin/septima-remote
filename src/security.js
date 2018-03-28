@@ -21,7 +21,7 @@ function principal(manager) {
             });
 }
 
-function login(user, password){
+function login(user, password, manager){
     return Requests.requestLogin(user, password, manager);
 }
 

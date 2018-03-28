@@ -101,11 +101,11 @@ function baseUri() {
     if (i !== -1)
         s = s.substring(0, i);
 
-    // Rip off everything after the last slash.
+    // Rip off everything after the last slash and the last slash itself.
     i = s.lastIndexOf('/');
     if (i !== -1)
         s = s.substring(0, i);
-    return firstSlash(s);
+    return s;
 }
 
 function load(url, binary, manager) {
