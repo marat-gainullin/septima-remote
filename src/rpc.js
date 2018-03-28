@@ -1,4 +1,5 @@
 import Requests from './requests';
+import Resource from './resource';
 
 function generateFunction(moduleName, functionName) {
     return function () {
@@ -48,7 +49,7 @@ function startRequest(url, method, body, bodyType, manager) {
                 req.abort();
             };
         }
-        req.open(method, url);
+        req.open(method, Resource.remoteApi() + url);
         if (bodyType) {
             req.setRequestHeader("Content-Type", bodyType);
         }
@@ -73,7 +74,7 @@ function startRequest(url, method, body, bodyType, manager) {
 
 function ifJsonXmlResponse(xhr) {
     if (Requests.isJsonResponse(xhr)) {
-        return JSON.parse(xhr.responseText);
+        return JSON.parse(xhr.responseText, Requests.dateReviver);
     } else if (Requests.isXmlResponse(xhr)) {
         return xhr.responseXML;
     } else {
@@ -83,7 +84,7 @@ function ifJsonXmlResponse(xhr) {
 
 function ifJsonXmlError(xhr) {
     if (Requests.isJsonResponse(xhr)) {
-        throw JSON.parse(xhr.responseText);
+        throw JSON.parse(xhr.responseText, Requests.dateReviver);
     } else if (Requests.isXmlResponse(xhr)) {
         return xhr.responseXML;
     } else {
@@ -98,7 +99,7 @@ class Rest {
     }
 
     get(instanceKey, manager) {
-        return startRequest(this.url + (!!instanceKey ? "/" + encodeURIComponent(instanceKey) : ""), Requests.Methods.GET, null, null, manager)
+        return startRequest(this.url + (!!instanceKey ? '/' + encodeURIComponent(instanceKey) : ""), Requests.Methods.GET, null, null, manager)
             .then(ifJsonXmlResponse)
             .catch(ifJsonXmlError);
     }
@@ -116,13 +117,13 @@ class Rest {
     }
 
     put(instanceKey, instance, manager) {
-        return startRequest(this.url + "/" + encodeURIComponent(instanceKey), Requests.Methods.PUT, JSON.stringify(instance), 'application/json;charset=utf-8', manager)
+        return startRequest(this.url + '/' + encodeURIComponent(instanceKey), Requests.Methods.PUT, JSON.stringify(instance), 'application/json;charset=utf-8', manager)
             .then(ifJsonXmlResponse)
             .catch(ifJsonXmlError);
     }
 
     delete(instanceKey, manager) {
-        return startRequest(this.url + "/" + encodeURIComponent(instanceKey), Requests.Methods.DELETE, null, null, manager)
+        return startRequest(this.url + '/' + encodeURIComponent(instanceKey), Requests.Methods.DELETE, null, null, manager)
             .then(ifJsonXmlResponse)
             .catch(ifJsonXmlError);
     }

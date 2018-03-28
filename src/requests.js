@@ -38,7 +38,7 @@ function submitForm(formAction, method, formData, manager) {
                 req.abort();
             };
         }
-        let url = formAction ? formAction : '';
+        let url = Resource.remoteApi() + formAction ? formAction : '';
         const paramsData = objToParams(formData);
         if (method.toLowerCase() !== Methods.POST.toLowerCase()) {
             url += `?${paramsData}`;
@@ -140,8 +140,8 @@ function isXmlResponse(xhr) {
     }
 }
 
-function encodeURIPath(aPath){
-    return aPath.split('/').map(element => encodeURIComponent(element)).join("/");
+function encodeURIPath(aPath) {
+    return aPath.split('/').map(element => encodeURIComponent(element)).join('/');
 }
 
 function requestData(aServerEntityName, aParams, manager) {
@@ -167,7 +167,7 @@ function requestSchema(aServerEntityName, manager) {
     return startApiRequest(global.septimajs.config.schemaUri + '/' + encodeURIPath(aServerEntityName), null, null, Methods.GET, null, manager)
         .then(xhr => {
             if (isJsonResponse(xhr)) {
-                return JSON.parse(xhr.responseText, dateReviver);
+                return JSON.parse(xhr.responseText);
             } else {
                 throw 'Wrong response MIME type. It should be json-like MIME type';
             }
@@ -191,9 +191,15 @@ function requestParameters(aServerEntityName, manager) {
         });
 }
 
+function requestLogin(user, password, manager) {
+    return startApiRequest(global.septimajs.config.loginUri, '', `user=${encodeURIComponent(user)}&password=${encodeURIComponent(password)}`, Methods.POST, 'application/x-www-form-urlencoded', manager)
+        .catch(xhr => {
+            throw xhr.responseText ? xhr.responseText : `${xhr.status} : ${xhr.statusText}`;
+        });
+}
+
 function requestLogout(manager) {
     return startApiRequest(global.septimajs.config.logoutUri, '', '', Methods.GET, null, manager)
-    //.then(xhr => xhr)
         .catch(xhr => {
             throw xhr.responseText ? xhr.responseText : `${xhr.status} : ${xhr.statusText}`;
         });
@@ -243,14 +249,14 @@ function requestRpc(aModuleName, aMethodName, aParams, manager) {
     return startApiRequest("/" + encodeURIPath(aModuleName) + "/" + encodeURIPath(aMethodName), null, JSON.stringify(aParams), Methods.POST, 'application/json;charset=utf-8', manager)
         .then(xhr => {
             if (isJsonResponse(xhr)) {
-                return JSON.parse(xhr.responseText);
+                return JSON.parse(xhr.responseText, dateReviver);
             } else {
                 return xhr.responseText;
             }
         })
         .catch(xhr => {
             if (isJsonResponse(xhr)) {
-                throw JSON.parse(xhr.responseText);
+                throw JSON.parse(xhr.responseText, dateReviver);
             } else {
                 throw xhr.responseText ? xhr.responseText : `${xhr.status} : ${xhr.statusText}`;
             }
@@ -289,6 +295,12 @@ Object.defineProperty(module, 'requestLoggedInUser', {
     enumerable: true,
     configurable: false,
     value: requestLoggedInUser
+});
+
+Object.defineProperty(module, 'requestLogin', {
+    enumerable: true,
+    configurable: false,
+    value: requestLogin
 });
 
 Object.defineProperty(module, 'requestLogout', {

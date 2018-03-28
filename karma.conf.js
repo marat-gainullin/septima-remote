@@ -34,13 +34,13 @@ module.exports = function (config) {
                         ignore: /node_modules/
                     }
                 ]
-                //,['browserify-babel-istanbul']
+                ,['browserify-babel-istanbul']
             ],
             debug: true
         },
         // Continuous Integration mode
         // if true, Karma captures browsers, runs the tests and exits
-        singleRun: false,
+        singleRun: true,
         // test results reporter to use
         // possible values: 'dots', 'progress'
         // available reporters: https://npmjs.org/browse/keyword/karma-reporter

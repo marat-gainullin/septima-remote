@@ -49,6 +49,15 @@ if (!global.septimajs) {
                 commitUri = firstSlash(aValue);
             }
         });
+        let loginUri = '/j_security_check';
+        Object.defineProperty(config, 'loginUri', {
+            get: function () {
+                return loginUri;
+            },
+            set: function (aValue) {
+                loginUri = firstSlash(aValue);
+            }
+        });
         let loggedInUri = '/logged-in';
         Object.defineProperty(config, 'loggedInUri', {
             get: function () {
@@ -75,7 +84,11 @@ if (!global.septimajs) {
     Object.seal(global.septimajs);
 }
 
-function hostPageBaseURL() {
+function remoteApi() {
+    return global.septimajs.config.remoteApi ? global.septimajs.remoteApi : baseUri();
+}
+
+function baseUri() {
     let s = document.location.href;
 
     // Pull off any hash.
@@ -92,19 +105,7 @@ function hostPageBaseURL() {
     i = s.lastIndexOf('/');
     if (i !== -1)
         s = s.substring(0, i);
-
-    // Ensure a final slash if non-empty.
-    return s.length > 0 ? `${s}/` : "";
-}
-
-function remoteApi() {
-    return global.septimajs.config.remoteApi ? global.septimajs.remoteApi : relativeUri();
-}
-
-function relativeUri() {
-    let pageUrl = hostPageBaseURL();
-    pageUrl = pageUrl.substring(0, pageUrl.length - 1);
-    return pageUrl;
+    return firstSlash(s);
 }
 
 function load(url, binary, manager) {
@@ -202,7 +203,7 @@ function startDownloadRequest(url, responseType, manager) {
 
 function startUploadRequest(aUri, aFile, aName, onComplete, onProgress, onFailure) {
     const req = new XMLHttpRequest();
-    req.open('post', remoteApi() + "/" + aUri);
+    req.open('post', remoteApi() + firstSlash(aUri));
     if (req.upload) {
         req.upload.onloadstart = aEvent => {
             if (onProgress) {
@@ -333,15 +334,10 @@ Object.defineProperty(module, 'download', {
     configurable: false,
     value: download
 });
-Object.defineProperty(module, 'hostPageBaseURL', {
+Object.defineProperty(module, 'baseUri', {
     enumerable: true,
     configurable: false,
-    value: hostPageBaseURL
-});
-Object.defineProperty(module, 'relativeUri', {
-    enumerable: true,
-    configurable: false,
-    value: relativeUri
+    value: baseUri
 });
 Object.defineProperty(module, 'remoteApi', {
     get: function () {
