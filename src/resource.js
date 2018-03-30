@@ -152,25 +152,25 @@ function isJsonResponse(xhr) {
     }
 }
 
-function upload(aUri, aFile, aName, onComplete, onProgress, onFailure) {
+function upload(aUri, aFile, aName, onProgress, manager) {
     if (aFile) {
-        let completed = false;
-        return startUploadRequest(aUri, aFile, aName, aResult => {
-            completed = true;
-            if (onComplete) {
-                onComplete(aResult);
-            }
-        }, aResult => {
-            if (!completed) {
-                if (onProgress) {
-                    onProgress(aResult);
+        return new Promise((resolve, reject) => {
+            let completed = false;
+            startUploadRequest(aUri, aFile, aName, aResult => {
+                completed = true;
+                resolve(aResult);
+            }, aResult => {
+                if (!completed) {
+                    if (onProgress) {
+                        onProgress(aResult);
+                    }
                 }
-            }
-        }, reason => {
-            if (onFailure) {
-                onFailure(reason);
-            }
+            }, reason => {
+                reject(reason);
+            }, manager);
         });
+    } else {
+        throw 'aFile is a required argument';
     }
 }
 
@@ -201,7 +201,7 @@ function startDownloadRequest(url, responseType, manager) {
     });
 }
 
-function startUploadRequest(aUri, aFile, aName, onComplete, onProgress, onFailure) {
+function startUploadRequest(aUri, aFile, aName, onComplete, onProgress, onFailure, manager) {
     const req = new XMLHttpRequest();
     req.open('post', remoteApi() + firstSlash(aUri));
     if (req.upload) {
@@ -262,7 +262,7 @@ function startUploadRequest(aUri, aFile, aName, onComplete, onProgress, onFailur
                 if (onComplete) {
                     onComplete(isJsonResponse(req) ? JSON.parse(req.responseText) : req.responseText);
                 }
-            } else if(req.status === 201) {
+            } else if (req.status === 201) {
                 if (onComplete) {
                     onComplete(req.getResponseHeader('Location'));
                 }
@@ -270,11 +270,11 @@ function startUploadRequest(aUri, aFile, aName, onComplete, onProgress, onFailur
         }
     };
     req.send(fd);
-    return {
-        cancel: function () {
+    if(manager){
+        manager.cancel = () => {
             req.abort();
-        }
-    };
+        };
+    }
 }
 
 function Icon() {
@@ -318,15 +318,15 @@ Object.defineProperty(module, 'upload', {
 Object.defineProperty(module, 'load', {
     enumerable: true,
     configurable: false,
-    value: function (aResName, onSuccess, onFailure) {
-        return load(aResName, true, onSuccess, onFailure);
+    value: function (aResName, manager) {
+        return load(aResName, true, manager);
     }
 });
 Object.defineProperty(module, 'loadText', {
     enumerable: true,
     configurable: false,
-    value: function (aResName, onSuccess, onFailure) {
-        return load(aResName, false, onSuccess, onFailure);
+    value: function (aResName, manager) {
+        return load(aResName, false, manager);
     }
 });
 Object.defineProperty(module, 'download', {

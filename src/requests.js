@@ -192,7 +192,7 @@ function requestParameters(aServerEntityName, manager) {
 }
 
 function requestLogin(user, password, manager) {
-    return startApiRequest(global.septimajs.config.loginUri, '', `user=${encodeURIComponent(user)}&password=${encodeURIComponent(password)}`, Methods.POST, 'application/x-www-form-urlencoded', manager)
+    return startApiRequest(global.septimajs.config.loginUri, '', `j_username=${encodeURIComponent(user)}&j_password=${encodeURIComponent(password)}`, Methods.POST, 'application/x-www-form-urlencoded', manager)
         .catch(xhr => {
             throw xhr.responseText ? xhr.responseText : `${xhr.status} : ${xhr.statusText}`;
         });

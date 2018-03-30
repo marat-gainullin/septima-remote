@@ -131,17 +131,17 @@ describe('Septima resources upload. ', () => {
         return done => {
             let uploadedTotal = 0;
             const file = new File([new Blob()], 'dummy.txt');
-            const request = Resource.upload(targetUri, file, 'test-uploaded-resource.bin', uploaded => {
-                expect(uploaded).toBeDefined();
-                expect(uploaded.endsWith('just-uploaded')).toBeTruthy();
-                expect(uploadedTotal).toBeGreaterThan(0);
-                done();
-            }, progress => {
+            const request = new Requests.Cancelable();
+            Resource.upload(targetUri, file, 'test-uploaded-resource.bin', progress => {
                 uploadedTotal = progress.loaded;
-            }, e => {
-                done.fail(e);
-            });
-            expect(request).toBeDefined();
+            }, request)
+                .then(uploaded => {
+                    expect(uploaded).toBeDefined();
+                    expect(uploaded.endsWith('just-uploaded')).toBeTruthy();
+                    expect(uploadedTotal).toBeGreaterThan(0);
+                    done();
+                })
+                .catch(done.fail);
             expect(request.cancel).toBeDefined();
         };
     }
@@ -151,17 +151,19 @@ describe('Septima resources upload. ', () => {
         return done => {
             let uploadedTotal = 0;
             const file = new File([new Blob()], 'dummy.txt');
-            const request = Resource.upload(targetUri, file, 'test-uploaded-resource.bin', uploaded => {
-                done.fail("Failure shouldn't lead to success callback call");
-            }, progress => {
+            const request = new Requests.Cancelable();
+            Resource.upload(targetUri, file, 'test-uploaded-resource.bin', progress => {
                 uploadedTotal = progress.loaded;
-            }, e => {
-                expect(uploadedTotal).toBeGreaterThan(0);
-                expect(e).toBeDefined();
-                expect(e.length).toBeGreaterThan(0);
-                done();
-            });
-            expect(request).toBeDefined();
+            }, request)
+                .then(uploaded => {
+                    done.fail("Failure shouldn't lead to success callback call");
+                })
+                .catch(e => {
+                    expect(uploadedTotal).toBeGreaterThan(0);
+                    expect(e).toBeDefined();
+                    expect(e.length).toBeGreaterThan(0);
+                    done();
+                });
             expect(request.cancel).toBeDefined();
         };
     }
