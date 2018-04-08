@@ -252,7 +252,7 @@ function startUploadRequest(aUri, aFile, aName, onComplete, onProgress, onFailur
         };
     }
     const fd = new FormData();
-    fd.append(aFile.name, aFile, aName);
+    fd.append(aName, aFile, aFile.name);
     req.overrideMimeType("multipart/form-data");
     // Must set the onreadystatechange handler before calling send().
     req.onreadystatechange = xhr => {
