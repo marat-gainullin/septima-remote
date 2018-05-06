@@ -65,7 +65,7 @@ function submitForm(formAction, method, formData, manager) {
 }
 
 function dateReviver(k, v) {
-    if (typeof v === 'string' && /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/.test(v)) {
+    if (typeof v === 'string' && (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/.test(v) || /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}\+0000/.test(v))) {
         return new Date(v);
     } else {
         return v;
