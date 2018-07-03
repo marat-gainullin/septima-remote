@@ -140,4 +140,8 @@ Object.defineProperty(module, 'Rest', {
     enumerable: true,
     value: Rest
 });
+Object.defineProperty(module, 'startRequest', {
+    enumerable: true,
+    value: startRequest
+});
 export default module;
