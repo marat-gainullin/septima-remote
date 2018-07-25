@@ -191,8 +191,8 @@ function requestParameters(aServerEntityName, manager) {
         });
 }
 
-function requestLogin(user, password, manager) {
-    return startApiRequest(global.septimajs.config.loginUri, '', `j_username=${encodeURIComponent(user)}&j_password=${encodeURIComponent(password)}`, Methods.POST, 'application/x-www-form-urlencoded', manager)
+function requestLogin(user, password, keepMe = false, manager = null) {
+    return startApiRequest(global.septimajs.config.loginUri, '', `j_username=${encodeURIComponent(user)}&j_password=${encodeURIComponent(password)}${(keepMe ? '&j_keep_me_logged_in': '')}`, Methods.POST, 'application/x-www-form-urlencoded', manager)
         .catch(xhr => {
             throw xhr.responseText ? xhr.responseText : `${xhr.status} : ${xhr.statusText}`;
         });

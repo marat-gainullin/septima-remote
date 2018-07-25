@@ -21,7 +21,7 @@ function principal(manager) {
             });
 }
 
-function login(user, password, manager){
+function login(user, password, keepMe = false, manager = null){
     return Requests.requestLogin(user, password, manager);
 }
 
