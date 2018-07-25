@@ -22,7 +22,7 @@ function principal(manager) {
 }
 
 function login(user, password, keepMe = false, manager = null){
-    return Requests.requestLogin(user, password, manager);
+    return Requests.requestLogin(user, password, keepMe, manager);
 }
 
 const module = {};
