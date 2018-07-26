@@ -14,15 +14,23 @@ class Principal {
         return Requests.requestLogout(manager);
     }
 }
+
 function principal(manager) {
     return Requests.requestLoggedInUser(manager)
-            .then(userName => {
-                return new Principal(userName);
-            });
+        .then(userName => {
+            return new Principal(userName);
+        });
 }
 
-function login(user, password, keepMe = false, manager = null){
-    return Requests.requestLogin(user, password, keepMe, manager);
+function login(user, password, keepMe = false, manager = null) {
+    return Requests.requestLogin(user, password, manager)
+        .then(xhr => {
+            if (keepMe) {
+                return Requests.requestKeepMe(manager);
+            } else {
+                return xhr;
+            }
+        });
 }
 
 const module = {};

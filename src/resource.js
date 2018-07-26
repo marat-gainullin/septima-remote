@@ -58,6 +58,15 @@ if (!global.septimajs) {
                 loginUri = firstSlash(aValue);
             }
         });
+        let keepMeUri = '/j_keep_me_logged_in';
+        Object.defineProperty(config, 'keepMeUri', {
+            get: function () {
+                return keepMeUri;
+            },
+            set: function (aValue) {
+                keepMeUri = firstSlash(aValue);
+            }
+        });
         let loggedInUri = '/logged-in';
         Object.defineProperty(config, 'loggedInUri', {
             get: function () {

@@ -191,8 +191,15 @@ function requestParameters(aServerEntityName, manager) {
         });
 }
 
-function requestLogin(user, password, keepMe = false, manager = null) {
-    return startApiRequest(global.septimajs.config.loginUri, '', `j_username=${encodeURIComponent(user)}&j_password=${encodeURIComponent(password)}${(keepMe ? '&j_keep_me_logged_in': '')}`, Methods.POST, 'application/x-www-form-urlencoded', manager)
+function requestKeepMe(manager = null) {
+    return startApiRequest(global.septimajs.config.keepMeUri, '', null, Methods.GET, null, manager)
+        .catch(xhr => {
+            throw xhr.responseText ? xhr.responseText : `${xhr.status} : ${xhr.statusText}`;
+        });
+}
+
+function requestLogin(user, password, manager = null) {
+    return startApiRequest(global.septimajs.config.loginUri, '', `j_username=${encodeURIComponent(user)}&j_password=${encodeURIComponent(password)}`, Methods.POST, 'application/x-www-form-urlencoded', manager)
         .catch(xhr => {
             throw xhr.responseText ? xhr.responseText : `${xhr.status} : ${xhr.statusText}`;
         });
@@ -301,6 +308,12 @@ Object.defineProperty(module, 'requestLogin', {
     enumerable: true,
     configurable: false,
     value: requestLogin
+});
+
+Object.defineProperty(module, 'requestKeepMe', {
+    enumerable: true,
+    configurable: false,
+    value: requestKeepMe
 });
 
 Object.defineProperty(module, 'requestLogout', {
