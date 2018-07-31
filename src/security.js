@@ -24,11 +24,19 @@ function principal(manager) {
 
 function login(user, password, keepMe = false, manager = null) {
     return Requests.requestLogin(user, password, manager)
-        .then(xhr => {
-            if (keepMe) {
-                return Requests.requestKeepMe(manager);
+        .then(() => principal(manager))
+        .then(p => {
+            if (p.name.startsWith('anonymous')) {
+                throw p;
             } else {
-                return xhr;
+                return p;
+            }
+        })
+        .then(loggedIn => {
+            if (keepMe) {
+                return Requests.requestKeepMe(manager).then(loggedIn);
+            } else {
+                return loggedIn;
             }
         });
 }
