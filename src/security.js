@@ -34,7 +34,7 @@ function login(user, password, keepMe = false, manager = null) {
         })
         .then(loggedIn => {
             if (keepMe) {
-                return Requests.requestKeepMe(manager).then(loggedIn);
+                return Requests.requestKeepMe(manager).then(() => loggedIn);
             } else {
                 return loggedIn;
             }
