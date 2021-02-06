@@ -6,7 +6,7 @@ import mockSeptimaServer from "./server-mock";
 describe('Septima resources fetch. ', () => {
     it('loadText.abs.success', done => {
         const request = new Requests.Cancelable();
-        Resource.loadText('base/assets/text-content.xml', request)
+        Resource.loadText('../assets/text-content.xml', request)
             .then(loaded => {
                 expect(loaded).toBeDefined();
                 expect(loaded.length).toBeDefined();
@@ -21,7 +21,7 @@ describe('Septima resources fetch. ', () => {
     });
     it('load.text as binary.abs.success', done => {
         const request = new Requests.Cancelable();
-        Resource.load('base/assets/text-content-as-binary.bin', request)
+        Resource.load('../assets/text-content-as-binary.bin', request)
             .then(buffer => {
                 expect(buffer).toBeDefined();
                 expect(buffer.length).toBeDefined();
@@ -35,7 +35,7 @@ describe('Septima resources fetch. ', () => {
     });
     it('load.abs.success', done => {
         const request = new Requests.Cancelable();
-        Resource.load('base/assets/binary-content.png', request)
+        Resource.load('../assets/binary-content.png', request)
             .then(buffer => {
                 expect(buffer).toBeDefined();
                 expect(buffer.length).toBeDefined();
@@ -50,7 +50,7 @@ describe('Septima resources fetch. ', () => {
     });
     it('load.abs.failure', done => {
         const request = new Requests.Cancelable();
-        Resource.load('base/assets/absent-content.png', request)
+        Resource.load('../assets/absent-content.png', request)
             .then(buffer => {
                 done.fail('Loading of absent content should lead to an error');
             })
@@ -63,7 +63,7 @@ describe('Septima resources fetch. ', () => {
     });
     it('load.relative.success', done => {
         const request = new Requests.Cancelable();
-        Resource.load('../base/../base/assets/binary-content.png', request)
+        Resource.load('../assets/binary-content.png', request)
             .then(buffer => {
                 expect(buffer).toBeDefined();
                 expect(buffer.length).toBeDefined();
