@@ -91,7 +91,7 @@ describe('Septima resources fetch. ', () => {
     });
     it('load.global.success', done => {
         const request = new Requests.Cancelable();
-        Resource.load('http://localhost:9876/base/assets/binary-content.png', request)
+        Resource.load('http://localhost:9876/assets/binary-content.png', request)
             .then(buffer => {
                 expect(buffer).toBeDefined();
                 expect(buffer.length).toBeDefined();
@@ -106,7 +106,7 @@ describe('Septima resources fetch. ', () => {
     });
     it('load.global.failure', done => {
         const request = new Requests.Cancelable();
-        Resource.load('http://localhost:9876/base/assets/absent-content.png', request)
+        Resource.load('http://localhost:9876/assets/absent-content.png', request)
             .then(buffer => {
                 done.fail('Loading of absent content should lead to an error');
             })

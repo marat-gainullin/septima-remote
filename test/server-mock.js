@@ -231,7 +231,7 @@ export default () => {
                         const age = xhr.requestBody.match(/age=([\da-zA-Z]+)/)[1];
                         respondObj(xhr, name + age);
                     } else if (xhr.url.includes('rest-samples')) {
-                        restSamples.push(JSON.parse(xhr.requestBody));
+                        //restSamples.push(JSON.parse(xhr.requestBody));
                         xhr.respond(201, {"Location": "/rest-samples/sample5"});
                     } else {
                         throw `Unknown url for POST: ${xhr.url}`;
@@ -239,17 +239,19 @@ export default () => {
                 } else if (xhr.method.toLowerCase() === 'put') {
                     if(xhr.url.endsWith('rest-samples/sample3')) {
                         const sample3 = JSON.parse(xhr.requestBody);
+                        /*
                         restSamples[2].name = sample3.name;
                         restSamples[2].flag = sample3.flag;
                         restSamples[2].moment = new Date(sample3.moment);
                         restSamples[2].amount = sample3.amount;
+                         */
                         xhr.respond(200);
                     } else {
                         throw `Unknown url for PUT: ${xhr.url}`;
                     }
                 } else if (xhr.method.toLowerCase() === 'delete') {
                     if(xhr.url.endsWith('rest-samples/sample2')) {
-                        restSamples.splice(1, 1);
+                        //restSamples.splice(1, 1);
                         xhr.respond(200);
                     } else {
                         throw `Unknown url for DELETE: ${xhr.url}`;

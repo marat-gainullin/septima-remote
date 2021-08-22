@@ -1,15 +1,14 @@
 import nodeResolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import {babel} from '@rollup/plugin-babel';
+import serve from 'rollup-plugin-serve'
 import page from 'rollup-plugin-generate-html-template';
 import styles from 'rollup-plugin-styles';
-import path from "path";
-import assert from "assert";
-import shell from 'shelljs';
 
 const srcDir = 'src';
 const testDir = 'test';
 const buildDir = 'build';
+const casesPage = 'cases.html'
 
 const config = {
     input: [`${testDir}/remote-specs.js`],
@@ -27,13 +26,13 @@ const config = {
             babelHelpers: 'bundled',
             presets: [['@babel/preset-env', {modules: false}]],
         }),
-        page({template: `${testDir}/cases.html`}),
-        {
-            name: 'browse', closeBundle: () => {
-                const opened = shell.exec(path.resolve(buildDir, 'cases.html'));
-                assert(opened.code === 0, opened.stderr);
-            }
-        }
+        page({template: `${testDir}/${casesPage}`}),
+        serve({
+            open: true,
+            openPage: `/${buildDir}/${casesPage}`,
+            contentBase: '.',
+            port: 9876
+        })
     ]
 };
 
