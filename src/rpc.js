@@ -41,7 +41,7 @@ function createProxy(aModuleName) {
 }
 
 
-function startRequest(url, method, body, bodyType, manager) {
+function startRequest(url, method, body, bodyType, onSend, manager) {
     return new Promise((resolve, reject) => {
         const req = new XMLHttpRequest();
         if (manager) {
@@ -64,12 +64,32 @@ function startRequest(url, method, body, bodyType, manager) {
                 }
             }
         };
+        onSend(req)
         if (body) {
             req.send(body);
         } else {
             req.send();
         }
     });
+}
+
+function asUrlParameters(params) {
+    if (params) {
+        const names = Object.keys(params)
+        if (names.length !== 0) {
+            return '?' + names
+                .map((item) => {
+                    return `${item}=${encodeURIComponent(params[item])}`
+                })
+                .reduce((p1, p2) => {
+                    return `${p1}&${p2}`
+                })
+        } else {
+            return ''
+        }
+    } else {
+        return ''
+    }
 }
 
 function ifJsonXmlResponse(xhr) {
@@ -96,16 +116,18 @@ class Rest {
 
     constructor(url) {
         this.url = url;
+        this.onSend = (req) => {
+        }
     }
 
-    get(instanceKey, manager) {
-        return startRequest(this.url + (!!instanceKey ? '/' + encodeURIComponent(instanceKey) : ""), Requests.Methods.GET, null, null, manager)
+    get(instanceKey, parameters, manager) {
+        return startRequest(this.url + (!!instanceKey ? '/' + encodeURIComponent(instanceKey) : "") + asUrlParameters(parameters), Requests.Methods.GET, null, null, this.onSend, manager)
             .then(ifJsonXmlResponse)
             .catch(ifJsonXmlError);
     }
 
-    post(instance, manager) {
-        return startRequest(this.url, Requests.Methods.POST, JSON.stringify(instance), 'application/json;charset=utf-8', manager)
+    post(instance, parameters, manager) {
+        return startRequest(this.url + asUrlParameters(parameters), Requests.Methods.POST, JSON.stringify(instance), 'application/json;charset=utf-8', this.onSend, manager)
             .then(xhr => {
                 if (xhr.status === 201 && xhr.getResponseHeader("Location")) {
                     return xhr.getResponseHeader("Location");
@@ -116,14 +138,14 @@ class Rest {
             .catch(ifJsonXmlError);
     }
 
-    put(instanceKey, instance, manager) {
-        return startRequest(this.url + '/' + encodeURIComponent(instanceKey), Requests.Methods.PUT, JSON.stringify(instance), 'application/json;charset=utf-8', manager)
+    put(instanceKey, instance, parameters, manager) {
+        return startRequest(this.url + '/' + encodeURIComponent(instanceKey) + asUrlParameters(parameters), Requests.Methods.PUT, JSON.stringify(instance), 'application/json;charset=utf-8', this.onSend, manager)
             .then(ifJsonXmlResponse)
             .catch(ifJsonXmlError);
     }
 
-    delete(instanceKey, manager) {
-        return startRequest(this.url + '/' + encodeURIComponent(instanceKey), Requests.Methods.DELETE, null, null, manager)
+    delete(instanceKey, parameters, manager) {
+        return startRequest(this.url + '/' + encodeURIComponent(instanceKey) + asUrlParameters(parameters), Requests.Methods.DELETE, null, null, this.onSend, manager)
             .then(ifJsonXmlResponse)
             .catch(ifJsonXmlError);
     }
