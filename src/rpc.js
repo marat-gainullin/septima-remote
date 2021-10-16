@@ -49,7 +49,7 @@ function startRequest(url, method, body, bodyType, onSend, manager) {
                 req.abort();
             };
         }
-        req.open(method, Resource.remoteApi() + url);
+        req.open(method, /^http.*/i.test(url) ? url : Resource.remoteApi() + url);
         if (bodyType) {
             req.setRequestHeader("Content-Type", bodyType);
         }

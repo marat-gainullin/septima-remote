@@ -1,6 +1,6 @@
 {
   "name": "septima-remote",
-  "version": "0.0.28",
+  "version": "0.0.29",
   "description": "Septima.js requests and resources locator.",
   "repository": "https://github.com/marat-gainullin/septima-remote.git",
   "author": "marat-gainullin <mg@altsoft.biz>",
