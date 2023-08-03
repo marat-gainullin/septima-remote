@@ -106,7 +106,7 @@ function ifJsonXmlError(xhr) {
     if (Requests.isJsonResponse(xhr)) {
         throw JSON.parse(xhr.responseText, Requests.dateReviver);
     } else if (Requests.isXmlResponse(xhr)) {
-        return xhr.responseXML;
+        throw xhr.responseXML;
     } else {
         throw xhr.responseText ? xhr.responseText : `${xhr.status} : ${xhr.statusText}`;
     }
@@ -138,9 +138,21 @@ class Rest {
             .catch(ifJsonXmlError);
     }
 
+    patch(instanceKey, instance, parameters, manager) {
+        return startRequest(this.url + '/'+ encodeURIComponent(instanceKey) + asUrlParameters(parameters), Requests.Methods.PATCH, JSON.stringify(instance), 'application/json;charset=utf-8', this.onSend, manager)
+            .then(ifJsonXmlResponse)
+            .catch(ifJsonXmlError);
+    }
+
     put(instanceKey, instance, parameters, manager) {
         return startRequest(this.url + '/' + encodeURIComponent(instanceKey) + asUrlParameters(parameters), Requests.Methods.PUT, JSON.stringify(instance), 'application/json;charset=utf-8', this.onSend, manager)
-            .then(ifJsonXmlResponse)
+            .then(xhr => {
+                if (xhr.status === 201 && xhr.getResponseHeader("Location")) {
+                    return xhr.getResponseHeader("Location");
+                } else {
+                    return ifJsonXmlResponse(xhr);
+                }
+            })
             .catch(ifJsonXmlError);
     }
 

@@ -8,6 +8,9 @@ const Methods = {
     GET: 'GET',
     PUT: 'PUT',
     POST: 'POST',
+    PATCH: 'PATCH',
+    CONNECT: 'CONNECT',
+    OPTIONS: 'OPTIONS',
     HEAD: 'HEAD',
     DELETE: 'DELETE'
 };
